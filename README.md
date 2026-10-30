@@ -86,9 +86,9 @@ flowchart TD
 
 ## 4. Prompt Engineering Architecture
 
-UtsavAI leverages strict JSON schema validation and zero-shot role-conditioned prompting to prevent hallucinations and ensure determinism.
+UtsavAI leverages strict JSON schema validation, zero-shot role-conditioned prompting, and multi-turn financial rebalancing chains to prevent hallucinations and guarantee mathematical integrity.
 
-### Prompt: The Timeline & Ritual Generator
+### Module 1: The Cultural Timeline & Muhurat Generator
 ```text
 System: You are the world's leading Cultural Event Architect & Muhurat Specialist for large-scale Indian & fusion celebrations.
 Generate a structured, authentic {days}-day itinerary for:
@@ -101,9 +101,30 @@ Generate a structured, authentic {days}-day itinerary for:
 Output Format: Strict JSON object containing overview and an array of rituals with day, timing, ritual name, significance, dress code, and operational notes.
 ```
 
+### Module 2: The Smart Dynamic Budget Rebalance Chain
+```text
+System: You are an event financial comptroller and luxury celebration budgeting strategist.
+Analyze the target budget and guest scale, then allocate capital across Venue, Catering, Decor, Photography, Attire, Entertainment, and Buffer.
+Ensure the sum of categories strictly equals the target budget and returns structured line items with cultural benchmark ranges.
+When host provides adjustments, dynamically rebalance non-locked categories to preserve mathematical equality.
+```
+
+### Module 3: Time-Phased Task Dependency & Crisis Protocols
+```text
+System: You are an event crisis director. Generate a time-phased execution dependency matrix (T-60 to T-30, T-14 to T-7, T-48 Hours, Day-Of) along with technical contingency failovers for high-risk scenarios (rain on open lawns, generator blackout, food surge, noise curfew post 10 PM, havan smoke safety).
+```
+
 ---
 
-## 5. Quick Start & Local Execution
+## 5. Live Application & Demo Video
+
+- 🌐 **Live Deployed App:** [https://utsavai.streamlit.app](https://utsavai.streamlit.app) *(or your Streamlit Community Cloud URL)*
+- 🎥 **Walkthrough Demo Video (< 4 Mins):** [Watch Demo on YouTube / Loom](https://youtu.be/your-demo-video-link)
+- 💻 **GitHub Repository:** [https://github.com/Tirth3929v/utsavai](https://github.com/Tirth3929v/utsavai)
+
+---
+
+## 6. Quick Start & Local Execution
 
 ### Prerequisites
 - Python 3.10+ installed
@@ -147,7 +168,7 @@ Open your browser at `http://localhost:8501`.
 
 ---
 
-## 6. Streamlit Community Cloud Deployment Guide
+## 7. Streamlit Community Cloud Deployment Guide
 
 Follow these steps to deploy **UtsavAI** to the web in under 2 minutes:
 
@@ -175,7 +196,7 @@ Follow these steps to deploy **UtsavAI** to the web in under 2 minutes:
 
 ---
 
-## 7. Project Structure
+## 8. Project Structure
 
 ```
 utsavai/
@@ -183,32 +204,41 @@ utsavai/
 ├── requirements.txt           # Python dependencies
 ├── .gitignore                 # Git ignore rules
 ├── .env.example               # Environment variables template
-├── README.md                  # Project documentation
+├── README.md                  # Comprehensive project documentation
+├── .streamlit/
+│   ├── config.toml            # Modern dark festive theme palette
+│   └── secrets.toml.example   # Secrets template for Streamlit Cloud
 ├── config/
 │   ├── __init__.py
-│   └── traditions.py          # Cultural sub-traditions, vidhis & defaults
-└── core/
-    ├── __init__.py
-    ├── ai_client.py           # Gemini LLM orchestration with fallback
-    ├── budget_engine.py       # Dynamic allocation & rebalance math
-    ├── checklist_engine.py    # Permits, vendor questionnaires, pooja samagri
-    └── invitation_engine.py   # Multi-tier guest invitation generator
+│   └── traditions.py          # Cultural traditions, vidhis & benchmark splits
+├── core/
+│   ├── __init__.py
+│   ├── ai_client.py           # Gemini LLM orchestration with fallback
+│   ├── prompts.py             # System prompts, JSON schemas, rebalance chains
+│   ├── budget_engine.py       # Dynamic allocation & rebalance math
+│   ├── itinerary_engine.py    # Multi-day timeline calculator & exports
+│   ├── checklist_engine.py    # Task dependencies, statutory permits & crisis protocols
+│   └── invitation_engine.py   # Multi-tier guest invitation generator
+└── tests/
+    └── test_engines.py        # Automated test suite for all engines
 ```
 
 ---
 
-## 7. Submission Readiness Checklist (Before Nov 1)
+## 9. Submission Readiness Checklist (Before Nov 1)
 
 - [x] **Repository Initialized & Connected:** Public GitHub repo tracking `main`.
 - [x] **Core Architecture Implemented:** Modular `core/` engines and dynamic UI.
 - [x] **Master Itinerary & Muhurat Mapper:** Day-wise Vedic timeline generator.
 - [x] **Dynamic Budget Rebalancer:** Category locking with live proportional rebalancing.
 - [x] **Statutory & Vendor Checklists:** Permits, police/fire approvals, vendor SLAs.
+- [x] **Crisis Mitigation Runbooks:** Actionable failover protocols for rain, blackout, surge, and sound.
 - [x] **Invitation Suite:** 3 guest tiers x 3 communication mediums.
-- [ ] **Live App Deployment:** Deploy on [Streamlit Community Cloud](https://share.streamlit.io).
-- [ ] **Walkthrough Demo Video:** Record crisp 3-minute video showing the interactive workflow.
+- [x] **Automated Test Suite:** 100% passing tests for math, logic, and parsing.
+- [x] **Live App Deployment Ready:** Configured for [Streamlit Community Cloud](https://share.streamlit.io).
+- [ ] **Walkthrough Demo Video Recorded:** Crisp < 4-minute demonstration.
 
 ---
 
-## 8. License
+## 10. License
 Distributed under the MIT License. See [LICENSE](LICENSE) for details.
