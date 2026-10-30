@@ -1,0 +1,693 @@
+"""
+UtsavAI – The Cultural & Multi-Scale Event Architect
+Built with Streamlit, Plotly, and Google Gemini Orchestration.
+"""
+
+import os
+import json
+import datetime
+import pandas as pd
+import streamlit as st
+import plotly.express as px
+
+from config.traditions import (
+    CULTURAL_TRADITIONS,
+    EVENT_TYPES,
+    DIETARY_PREFERENCES,
+    VENUE_TYPES
+)
+from core.budget_engine import BudgetEngine
+from core.checklist_engine import ChecklistEngine
+from core.invitation_engine import InvitationEngine
+from core.ai_client import UtsavAIEngine
+
+# ---------------------------------------------------------
+# Page Configuration & Modern Festive Theme
+# ---------------------------------------------------------
+st.set_page_config(
+    page_title="UtsavAI – Cultural & Multi-Scale Event Architect",
+    page_icon="🪔",
+    layout="wide",
+    initial_sidebar_state="expanded"
+)
+
+CUSTOM_CSS = """
+<style>
+    /* Global Typography & Festive Tone */
+    @import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@500;700;900&family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap');
+
+    html, body, [class*="css"] {
+        font-family: 'Plus Jakarta Sans', sans-serif;
+    }
+
+    h1, h2, h3, .festive-font {
+        font-family: 'Cinzel', serif !important;
+        letter-spacing: 0.5px;
+    }
+
+    /* Main Container Padding */
+    .block-container {
+        padding-top: 1.8rem;
+        padding-bottom: 3.5rem;
+    }
+
+    /* Custom Hero Header Card */
+    .hero-card {
+        background: linear-gradient(135deg, #1A0B2E 0%, #2A0845 50%, #44107A 100%);
+        border: 1px solid rgba(212, 175, 55, 0.4);
+        border-radius: 16px;
+        padding: 24px 28px;
+        color: #FFFFFF;
+        box-shadow: 0 10px 25px rgba(0, 0, 0, 0.35);
+        margin-bottom: 24px;
+        position: relative;
+        overflow: hidden;
+    }
+    .hero-card::after {
+        content: "🪔";
+        position: absolute;
+        right: 25px;
+        top: 20px;
+        font-size: 70px;
+        opacity: 0.18;
+    }
+    .hero-title {
+        font-size: 2.1rem;
+        font-weight: 700;
+        color: #D4AF37;
+        margin-bottom: 6px;
+    }
+    .hero-subtitle {
+        font-size: 1.02rem;
+        color: #E2D9F3;
+        margin-bottom: 14px;
+        max-width: 85%;
+    }
+
+    /* Pill Badges */
+    .pill-badge {
+        display: inline-block;
+        background: rgba(212, 175, 55, 0.15);
+        color: #F3E5AB;
+        border: 1px solid rgba(212, 175, 55, 0.4);
+        border-radius: 20px;
+        padding: 4px 12px;
+        font-size: 0.82rem;
+        font-weight: 600;
+        margin-right: 8px;
+        margin-bottom: 6px;
+    }
+
+    /* Modern Metric Cards */
+    .metric-card {
+        background: #111424;
+        border: 1px solid #282C40;
+        border-radius: 12px;
+        padding: 16px;
+        text-align: center;
+        transition: transform 0.2s ease, border-color 0.2s ease;
+    }
+    .metric-card:hover {
+        border-color: #D4AF37;
+        transform: translateY(-2px);
+    }
+    .metric-val {
+        font-size: 1.6rem;
+        font-weight: 700;
+        color: #FFB703;
+        font-family: 'Cinzel', serif;
+    }
+    .metric-lbl {
+        font-size: 0.82rem;
+        color: #A0AABF;
+        text-transform: uppercase;
+        letter-spacing: 0.8px;
+        margin-top: 4px;
+    }
+
+    /* Itinerary Timeline Card */
+    .timeline-card {
+        background: #131728;
+        border-left: 4px solid #D4AF37;
+        border-top: 1px solid #232840;
+        border-right: 1px solid #232840;
+        border-bottom: 1px solid #232840;
+        border-radius: 0 12px 12px 0;
+        padding: 18px 22px;
+        margin-bottom: 16px;
+    }
+    .timeline-time {
+        color: #FFB703;
+        font-weight: 700;
+        font-size: 0.92rem;
+    }
+    .timeline-title {
+        color: #FFFFFF;
+        font-size: 1.15rem;
+        font-weight: 600;
+        margin: 4px 0 8px 0;
+    }
+    .timeline-body {
+        color: #CBD5E1;
+        font-size: 0.93rem;
+        line-height: 1.5;
+    }
+    .tag-dress {
+        background: rgba(255, 107, 53, 0.15);
+        color: #FFA578;
+        border: 1px solid rgba(255, 107, 53, 0.35);
+        padding: 3px 10px;
+        border-radius: 12px;
+        font-size: 0.8rem;
+    }
+    .tag-notes {
+        background: rgba(10, 92, 54, 0.2);
+        color: #82E0AA;
+        border: 1px solid rgba(10, 92, 54, 0.4);
+        padding: 3px 10px;
+        border-radius: 12px;
+        font-size: 0.8rem;
+    }
+
+    /* Sidebar Styling */
+    section[data-testid="stSidebar"] {
+        background-color: #0E111E;
+        border-right: 1px solid #1E2337;
+    }
+
+    /* Tab Styling */
+    .stTabs [data-baseweb="tab-list"] {
+        gap: 8px;
+    }
+    .stTabs [data-baseweb="tab"] {
+        background-color: #141829;
+        border-radius: 8px 8px 0 0;
+        padding: 10px 20px;
+        color: #A0AABF;
+        font-weight: 600;
+    }
+    .stTabs [aria-selected="true"] {
+        background-color: #21193B !important;
+        color: #FFD166 !important;
+        border-bottom: 3px solid #D4AF37 !important;
+    }
+</style>
+"""
+st.markdown(CUSTOM_CSS, unsafe_allow_html=True)
+
+
+# ---------------------------------------------------------
+# Session State Initialization
+# ---------------------------------------------------------
+def initialize_state():
+    if "event_type" not in st.session_state:
+        st.session_state.event_type = EVENT_TYPES[0]
+    if "tradition" not in st.session_state:
+        st.session_state.tradition = "Gujarati Hindu"
+    if "guest_count" not in st.session_state:
+        st.session_state.guest_count = 350
+    if "total_budget" not in st.session_state:
+        st.session_state.total_budget = 2500000.0  # ₹25 Lakhs
+    if "currency" not in st.session_state:
+        st.session_state.currency = "₹"
+    if "event_duration" not in st.session_state:
+        st.session_state.event_duration = 2
+    if "start_date" not in st.session_state:
+        st.session_state.start_date = datetime.date.today() + datetime.timedelta(days=90)
+    if "venue_type" not in st.session_state:
+        st.session_state.venue_type = VENUE_TYPES[0]
+    if "dietary" not in st.session_state:
+        st.session_state.dietary = DIETARY_PREFERENCES[0]
+    if "host_names" not in st.session_state:
+        st.session_state.host_names = "The Mehta & Shah Families"
+    if "honoree_names" not in st.session_state:
+        st.session_state.honoree_names = "Aarav & Ananya"
+    if "venue_location" not in st.session_state:
+        st.session_state.venue_location = "Royal Heritage Palace & Resorts, Udaipur"
+    if "rsvp_contact" not in st.session_state:
+        st.session_state.rsvp_contact = "+91 98765 43210 / celebrate@utsavai.com"
+
+    # Allocations
+    if "budget_allocations" not in st.session_state:
+        trad_meta = CULTURAL_TRADITIONS.get(st.session_state.tradition, {})
+        split = trad_meta.get("default_budget_split")
+        st.session_state.budget_allocations = BudgetEngine.calculate_initial_allocation(
+            st.session_state.total_budget,
+            tradition_split=split
+        )
+
+    # Itinerary Schedule
+    if "itinerary_data" not in st.session_state:
+        trad_meta = CULTURAL_TRADITIONS.get(st.session_state.tradition, {})
+        st.session_state.itinerary_data = trad_meta.get("rituals", [])
+
+    # Checklists
+    if "checklists" not in st.session_state:
+        st.session_state.checklists = ChecklistEngine.get_default_checklists(
+            st.session_state.tradition,
+            st.session_state.event_type
+        )
+
+initialize_state()
+
+
+# ---------------------------------------------------------
+# Sidebar – Architectural Parameters
+# ---------------------------------------------------------
+with st.sidebar:
+    st.markdown("""
+        <div style="text-align: center; margin-bottom: 16px;">
+            <div style="font-size: 2.3rem;">🪔</div>
+            <h2 style="color: #D4AF37; margin: 0; font-size: 1.6rem;">UtsavAI</h2>
+            <div style="font-size: 0.8rem; color: #A0AABF; letter-spacing: 1px;">THE CULTURAL EVENT ARCHITECT</div>
+        </div>
+    """, unsafe_allow_html=True)
+
+    with st.expander("🔑 AI Intelligence & API Keys", expanded=False):
+        api_key_input = st.text_input(
+            "Google Gemini API Key",
+            value=os.getenv("GEMINI_API_KEY", ""),
+            type="password",
+            help="Optional. Leave blank to run in robust calibrated-preset mode."
+        )
+        if api_key_input:
+            os.environ["GEMINI_API_KEY"] = api_key_input
+
+    st.markdown("### 🏛️ Event Scope & Heritage")
+    selected_event = st.selectbox(
+        "Event Type",
+        EVENT_TYPES,
+        index=EVENT_TYPES.index(st.session_state.event_type) if st.session_state.event_type in EVENT_TYPES else 0
+    )
+
+    traditions_list = list(CULTURAL_TRADITIONS.keys())
+    selected_tradition = st.selectbox(
+        "Culture & Sub-Tradition",
+        traditions_list,
+        index=traditions_list.index(st.session_state.tradition) if st.session_state.tradition in traditions_list else 0
+    )
+
+    col_cur, col_bud = st.columns([1, 2.5])
+    with col_cur:
+        currency = st.selectbox("Currency", ["₹", "$", "£", "AED"], index=0)
+    with col_bud:
+        default_val = float(st.session_state.total_budget) if currency == "₹" else 50000.0
+        step_val = 50000.0 if currency == "₹" else 1000.0
+        total_budget = st.number_input(
+            f"Total Budget ({currency})",
+            min_value=1000.0,
+            value=default_val,
+            step=step_val,
+            format="%.0f"
+        )
+
+    col_g, col_d = st.columns(2)
+    with col_g:
+        guest_count = st.number_input("Guests", min_value=10, max_value=5000, value=st.session_state.guest_count, step=25)
+    with col_d:
+        event_duration = st.slider("Duration (Days)", min_value=1, max_value=5, value=st.session_state.event_duration)
+
+    start_date = st.date_input("Commencement Date", value=st.session_state.start_date)
+
+    with st.expander("🎨 Hospitality & Venue Nuances", expanded=False):
+        venue_type = st.selectbox("Venue Style", VENUE_TYPES, index=0)
+        dietary = st.selectbox("Culinary Directive", DIETARY_PREFERENCES, index=0)
+        priority_focus = st.selectbox(
+            "Primary Expenditure Focus",
+            ["Balanced Tradition", "Culinary Excellence", "Opulent Mandap & Floral Decor", "Cinematography & Visual Legacy", "Ultra-Luxury Guest Stay"]
+        )
+
+    st.markdown("<br>", unsafe_allow_html=True)
+    architect_btn = st.button("✨ Architect Master Plan", type="primary", use_container_width=True)
+
+    if architect_btn:
+        st.session_state.event_type = selected_event
+        st.session_state.tradition = selected_tradition
+        st.session_state.guest_count = guest_count
+        st.session_state.total_budget = total_budget
+        st.session_state.currency = currency
+        st.session_state.event_duration = event_duration
+        st.session_state.start_date = start_date
+        st.session_state.venue_type = venue_type
+        st.session_state.dietary = dietary
+
+        # Re-initialize budget split from tradition
+        trad_meta = CULTURAL_TRADITIONS.get(selected_tradition, {})
+        split = trad_meta.get("default_budget_split")
+        st.session_state.budget_allocations = BudgetEngine.calculate_initial_allocation(
+            total_budget,
+            tradition_split=split
+        )
+
+        # Update Itinerary from Tradition or AI
+        ai_engine = UtsavAIEngine(api_key=api_key_input)
+        if ai_engine.is_configured():
+            with st.spinner("🤖 Consulting Gemini AI for culturally tailored rituals..."):
+                ai_resp = ai_engine.generate_custom_itinerary(
+                    selected_event,
+                    selected_tradition,
+                    event_duration,
+                    guest_count,
+                    dietary,
+                    venue_type
+                )
+                if "schedule" in ai_resp and ai_resp["schedule"]:
+                    st.session_state.itinerary_data = ai_resp["schedule"]
+                else:
+                    st.session_state.itinerary_data = trad_meta.get("rituals", [])
+        else:
+            st.session_state.itinerary_data = trad_meta.get("rituals", [])
+
+        # Fresh checklists
+        st.session_state.checklists = ChecklistEngine.get_default_checklists(
+            selected_tradition,
+            selected_event
+        )
+        st.success("✨ Master plan architected successfully!")
+        st.rerun()
+
+
+# ---------------------------------------------------------
+# Main Body: Hero Banner & High-Level KPIs
+# ---------------------------------------------------------
+curr = st.session_state.currency
+total_b = st.session_state.total_budget
+guests = st.session_state.guest_count
+days = st.session_state.event_duration
+cost_per_guest = (total_b / guests) if guests > 0 else 0
+
+st.markdown(f"""
+    <div class="hero-card">
+        <div class="hero-title">UtsavAI – {st.session_state.event_type}</div>
+        <div class="hero-subtitle">
+            Curating sacred muhurats, culturally authentic vidhis, dynamic financial balance, and tailored hospitality.
+        </div>
+        <div>
+            <span class="pill-badge">🪔 Tradition: {st.session_state.tradition}</span>
+            <span class="pill-badge">👥 Scale: {guests:,} Guests</span>
+            <span class="pill-badge">📅 Duration: {days} Days</span>
+            <span class="pill-badge">🏰 Venue: {st.session_state.venue_type}</span>
+            <span class="pill-badge">🍲 Culinary: {st.session_state.dietary.split('(')[0].strip()}</span>
+        </div>
+    </div>
+""", unsafe_allow_html=True)
+
+# Top 4 KPIs
+kpi1, kpi2, kpi3, kpi4 = st.columns(4)
+with kpi1:
+    st.markdown(f"""
+        <div class="metric-card">
+            <div class="metric-val">{curr}{total_b:,.0f}</div>
+            <div class="metric-lbl">Total Capital Reserve</div>
+        </div>
+    """, unsafe_allow_html=True)
+with kpi2:
+    st.markdown(f"""
+        <div class="metric-card">
+            <div class="metric-val">{curr}{cost_per_guest:,.0f}</div>
+            <div class="metric-lbl">Per-Guest Investment</div>
+        </div>
+    """, unsafe_allow_html=True)
+with kpi3:
+    rituals_count = len(st.session_state.itinerary_data)
+    st.markdown(f"""
+        <div class="metric-card">
+            <div class="metric-val">{rituals_count}</div>
+            <div class="metric-lbl">Auspicious Milestones</div>
+        </div>
+    """, unsafe_allow_html=True)
+with kpi4:
+    start_fmt = st.session_state.start_date.strftime("%d %b %Y")
+    st.markdown(f"""
+        <div class="metric-card">
+            <div class="metric-val">{start_fmt}</div>
+            <div class="metric-lbl">Shubh Muhurat Date</div>
+        </div>
+    """, unsafe_allow_html=True)
+
+st.markdown("<br>", unsafe_allow_html=True)
+
+
+# ---------------------------------------------------------
+# Multi-Tab Navigation
+# ---------------------------------------------------------
+tab_itinerary, tab_budget, tab_checklists, tab_invitations = st.tabs([
+    "📅 Master Itinerary & Muhurats",
+    "💰 Smart Dynamic Budget Matrix",
+    "📋 Vendor & Ritual Checklists",
+    "💌 Personalized Invitation Suite"
+])
+
+
+# =========================================================
+# TAB 1: Master Itinerary & Muhurat Timeline
+# =========================================================
+with tab_itinerary:
+    st.markdown("### 🪔 Auspicious Timeline & Ritual Architecture")
+    st.caption("Synchronizing Vedic rituals, guest hospitality, setup intervals, and dress aesthetics.")
+
+    itinerary_items = st.session_state.itinerary_data
+
+    # Group rituals by day
+    days_present = sorted(list(set(item.get("day", 1) for item in itinerary_items)))
+
+    for d in days_present:
+        st.markdown(f"#### 🌅 Day {d} Schedule")
+        day_rituals = [r for r in itinerary_items if r.get("day", 1) == d]
+
+        for rit in day_rituals:
+            st.markdown(f"""
+                <div class="timeline-card">
+                    <div class="timeline-time">⏰ {rit.get('time', 'TBD')}</div>
+                    <div class="timeline-title">{rit.get('ritual', 'Ceremony')}</div>
+                    <div class="timeline-body">{rit.get('significance', '')}</div>
+                    <div style="margin-top: 10px;">
+                        <span class="tag-dress">👗 <b>Attire Vibe:</b> {rit.get('dress_code', 'Traditional Festive')}</span>
+                        <span class="tag-notes" style="margin-left: 8px;">📌 <b>Operational Note:</b> {rit.get('notes', 'Coordinate with priest and audio')}</span>
+                    </div>
+                </div>
+            """, unsafe_allow_html=True)
+
+    # Action Toolbar
+    st.markdown("<br>", unsafe_allow_html=True)
+    col_dl1, col_dl2 = st.columns([1, 4])
+    with col_dl1:
+        itinerary_json = json.dumps(itinerary_items, indent=2)
+        st.download_button(
+            "📥 Export Itinerary (JSON)",
+            data=itinerary_json,
+            file_name=f"utsav_itinerary_{st.session_state.tradition.lower().replace(' ', '_')}.json",
+            mime="application/json",
+            use_container_width=True
+        )
+
+
+# =========================================================
+# TAB 2: Smart Dynamic Budget Matrix
+# =========================================================
+with tab_budget:
+    st.markdown("### 💰 Smart Dynamic Budget Allocation & Rebalancing Engine")
+    st.caption("Pillar-by-pillar capital distribution with automatic rebalancing logic and contingency buffers.")
+
+    allocations = st.session_state.budget_allocations
+
+    col_chart, col_controls = st.columns([1.1, 1.2])
+
+    with col_chart:
+        st.markdown("##### 📊 Capital Allocation Breakdown")
+        fig = BudgetEngine.create_donut_chart(allocations, currency_symbol=curr)
+        st.plotly_chart(fig, use_container_width=True)
+
+        total_allocated = sum(d["amount"] for d in allocations.values())
+        var = total_b - total_allocated
+        if abs(var) < 1.0:
+            st.success(f"✅ Budget perfectly balanced to {curr}{total_b:,.0f} (100.0%)")
+        elif var > 0:
+            st.info(f"🛡️ Unallocated Capital Reserve: {curr}{var:,.0f}")
+        else:
+            st.warning(f"⚠️ Budget threshold exceeded by {curr}{abs(var):,.0f}!")
+
+    with col_controls:
+        st.markdown("##### 🎛️ Dynamic Category Overrides")
+        st.caption("Override any category cost. The remaining non-locked pillars automatically rebalance!")
+
+        cat_names = list(allocations.keys())
+        cat_to_adjust = st.selectbox("Select Pillar to Adjust", cat_names)
+
+        curr_data = allocations[cat_to_adjust]
+        new_val = st.number_input(
+            f"Set {cat_to_adjust} ({curr})",
+            min_value=0.0,
+            value=float(curr_data["amount"]),
+            step=25000.0 if curr == "₹" else 500.0,
+            format="%.0f"
+        )
+
+        col_b1, col_b2 = st.columns(2)
+        with col_b1:
+            if st.button("⚡ Rebalance Rest Automatically", type="primary", use_container_width=True):
+                reb_res = BudgetEngine.rebalance(
+                    total_b,
+                    allocations,
+                    cat_to_adjust,
+                    new_val
+                )
+                st.session_state.budget_allocations = reb_res["allocations"]
+                st.rerun()
+
+        with col_b2:
+            if st.button("🔄 Reset to Cultural Benchmark", use_container_width=True):
+                trad_meta = CULTURAL_TRADITIONS.get(st.session_state.tradition, {})
+                split = trad_meta.get("default_budget_split")
+                st.session_state.budget_allocations = BudgetEngine.calculate_initial_allocation(
+                    total_b,
+                    tradition_split=split
+                )
+                st.rerun()
+
+    # Detailed Category Matrix Table
+    st.markdown("---")
+    st.markdown("##### 📋 Pillar-by-Pillar Expenditure Matrix")
+
+    table_data = []
+    for cat, d in allocations.items():
+        table_data.append({
+            "Pillar": f"{d['icon']} {cat}",
+            f"Allocated ({curr})": f"{curr}{d['amount']:,.0f}",
+            "Share (%)": f"{d['percentage']}%",
+            f"Per Guest ({curr})": f"{curr}{(d['amount']/guests):,.0f}" if guests > 0 else "0",
+            "Target Benchmark": f"{d['benchmark_range'][0]}% - {d['benchmark_range'][1]}%",
+            "Operational Scope": d["description"],
+            "Status": "🔒 Locked" if d.get("locked") else "🔄 Fluid"
+        })
+
+    df_budget = pd.DataFrame(table_data)
+    st.dataframe(df_budget, use_container_width=True, hide_index=True)
+
+    # Cashflow & Vendor Payment Milestones
+    st.markdown("---")
+    st.markdown("##### ⏳ Milestone Vendor Cash-Flow Liquidity Schedule")
+    milestones = BudgetEngine.get_cashflow_milestones(total_b, currency_symbol=curr)
+
+    mcols = st.columns(len(milestones))
+    for i, m in enumerate(milestones):
+        with mcols[i]:
+            st.markdown(f"""
+                <div class="metric-card" style="text-align: left;">
+                    <div style="font-weight: 700; color: #D4AF37; font-size: 0.95rem;">{m['milestone']}</div>
+                    <div style="font-size: 0.8rem; color: #94A3B8; margin-bottom: 6px;">{m['timing']}</div>
+                    <div class="metric-val" style="font-size: 1.3rem;">{curr}{m['amount']:,.0f}</div>
+                    <div style="font-size: 0.78rem; color: #E2E8F0; margin-top: 6px;">{m['purpose']}</div>
+                </div>
+            """, unsafe_allow_html=True)
+
+
+# =========================================================
+# TAB 3: Localized Vendor & Ritual Checklists
+# =========================================================
+with tab_checklists:
+    st.markdown("### 📋 Localized Vendor, Permitting & Ritual Checklists")
+    st.caption("Actionable task lists, regulatory statutory compliance, and vendor interview questionnaires.")
+
+    checks = st.session_state.checklists
+
+    col_chk1, col_chk2 = st.columns(2)
+
+    with col_chk1:
+        st.markdown("#### 🏛️ Statutory Permits & Clearances")
+        for idx, item in enumerate(checks.get("Mandatory Permits & Regulatory Clearances", [])):
+            with st.container(border=True):
+                c_box = st.checkbox(
+                    f"**{item['item']}** — Deadline: `{item['deadline']}`",
+                    value=item.get("status", False),
+                    key=f"permit_{idx}"
+                )
+                st.caption(f"**Authority:** {item['authority']}\n\n{item['details']}")
+
+        st.markdown("<br>", unsafe_allow_html=True)
+        st.markdown("#### 🪔 Sacred Pooja & Samagri Kit")
+        for idx, item in enumerate(checks.get("Auspicious Pooja & Sacred Samagri Kit", [])):
+            st.checkbox(f"{item['item']} `[{item['category']}]`", value=item.get("status", False), key=f"samagri_{idx}")
+
+    with col_chk2:
+        st.markdown("#### 🤝 Vendor Technical Questionnaires & SLAs")
+        for v in checks.get("Vendor Critical Questionnaires & SLAs", []):
+            with st.expander(f"📌 {v['vendor_type']}", expanded=True):
+                st.markdown("**Questions to Mandate Before Signing:**")
+                for q in v["questions"]:
+                    st.markdown(f"- {q}")
+                st.info(f"💡 **SLA Pro-Tip:** {v['sla_tip']}")
+
+        st.markdown("<br>", unsafe_allow_html=True)
+        st.markdown("#### 🌦️ Weather & Contingency Protocol")
+        for idx, item in enumerate(checks.get("Weather & Seasonal Contingency Kit", [])):
+            st.checkbox(f"{item['item']} `({item['season']})`", value=item.get("status", False), key=f"weather_{idx}")
+
+
+# =========================================================
+# TAB 4: Personalized Guest Tier & Invitation Suite
+# =========================================================
+with tab_invitations:
+    st.markdown("### 💌 Personalized Multi-Tier Guest Invitation Suite")
+    st.caption("Segment your guests into tiers to deliver culturally resonant, medium-specific invitations.")
+
+    with st.expander("📝 Customize Invitation Details", expanded=False):
+        c_h1, c_h2 = st.columns(2)
+        with c_h1:
+            host_in = st.text_input("Host Family Names", value=st.session_state.host_names)
+            honoree_in = st.text_input("Honoree / Couple Names", value=st.session_state.honoree_names)
+        with c_h2:
+            venue_in = st.text_input("Venue Name & City", value=st.session_state.venue_location)
+            rsvp_in = st.text_input("RSVP Phone & Email", value=st.session_state.rsvp_contact)
+
+        if st.button("Update Invitation Copy"):
+            st.session_state.host_names = host_in
+            st.session_state.honoree_names = honoree_in
+            st.session_state.venue_location = venue_in
+            st.session_state.rsvp_contact = rsvp_in
+            st.rerun()
+
+    dates_str = f"{st.session_state.start_date.strftime('%B %d, %Y')} ({st.session_state.event_duration} Days)"
+    invitations = InvitationEngine.generate_invitations(
+        event_name=st.session_state.event_type,
+        hosts=st.session_state.host_names,
+        honorees=st.session_state.honoree_names,
+        tradition=st.session_state.tradition,
+        venue=st.session_state.venue_location,
+        dates=dates_str,
+        rsvp_contact=st.session_state.rsvp_contact
+    )
+
+    tier_tabs = st.tabs(list(invitations.keys()))
+
+    for i, (tier_name, tier_content) in enumerate(invitations.items()):
+        with tier_tabs[i]:
+            st.markdown(f"#### {tier_content['badge']}")
+            st.caption(f"**Target Audience:** {tier_content['audience']}")
+
+            fmt_card, fmt_wa, fmt_email = st.tabs(["📜 Formal Digital Card Copy", "💬 WhatsApp Broadcast", "✉️ Formal Email"])
+
+            with fmt_card:
+                st.text_area("Digital Card Copy", value=tier_content["card_copy"], height=240, key=f"card_{i}")
+
+            with fmt_wa:
+                st.text_area("WhatsApp Broadcast (Formatted with Emojis & Bold)", value=tier_content["whatsapp_copy"], height=240, key=f"wa_{i}")
+
+            with fmt_email:
+                st.text_area("Email Invitation Copy", value=tier_content["email_copy"], height=240, key=f"email_{i}")
+
+
+# ---------------------------------------------------------
+# Footer
+# ---------------------------------------------------------
+st.markdown("---")
+st.markdown(
+    """
+    <div style="text-align: center; color: #64748B; font-size: 0.85rem;">
+        <b>UtsavAI</b> – GenAI Cultural & Multi-Scale Event Architect | Built for PromptWars Hackathon 2026<br>
+        Empowering cultural authenticity, financial intelligence, and stress-free celebrations.
+    </div>
+    """,
+    unsafe_allow_html=True
+)
+
