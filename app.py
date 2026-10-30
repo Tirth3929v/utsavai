@@ -19,6 +19,7 @@ from config.traditions import (
 from core.budget_engine import BudgetEngine
 from core.checklist_engine import ChecklistEngine
 from core.invitation_engine import InvitationEngine
+from core.itinerary_engine import ItineraryEngine
 from core.ai_client import UtsavAIEngine
 
 # ---------------------------------------------------------
@@ -33,7 +34,6 @@ st.set_page_config(
 
 CUSTOM_CSS = """
 <style>
-    /* Global Typography & Festive Tone */
     @import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@500;700;900&family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap');
 
     html, body, [class*="css"] {
@@ -45,21 +45,20 @@ CUSTOM_CSS = """
         letter-spacing: 0.5px;
     }
 
-    /* Main Container Padding */
     .block-container {
-        padding-top: 1.8rem;
+        padding-top: 1.6rem;
         padding-bottom: 3.5rem;
     }
 
-    /* Custom Hero Header Card */
+    /* Hero Card */
     .hero-card {
-        background: linear-gradient(135deg, #1A0B2E 0%, #2A0845 50%, #44107A 100%);
-        border: 1px solid rgba(212, 175, 55, 0.4);
+        background: linear-gradient(135deg, #18092B 0%, #290848 50%, #46117D 100%);
+        border: 1px solid rgba(212, 175, 55, 0.45);
         border-radius: 16px;
         padding: 24px 28px;
         color: #FFFFFF;
-        box-shadow: 0 10px 25px rgba(0, 0, 0, 0.35);
-        margin-bottom: 24px;
+        box-shadow: 0 10px 28px rgba(0, 0, 0, 0.4);
+        margin-bottom: 22px;
         position: relative;
         overflow: hidden;
     }
@@ -68,8 +67,8 @@ CUSTOM_CSS = """
         position: absolute;
         right: 25px;
         top: 20px;
-        font-size: 70px;
-        opacity: 0.18;
+        font-size: 75px;
+        opacity: 0.16;
     }
     .hero-title {
         font-size: 2.1rem;
@@ -84,12 +83,12 @@ CUSTOM_CSS = """
         max-width: 85%;
     }
 
-    /* Pill Badges */
+    /* Badges */
     .pill-badge {
         display: inline-block;
-        background: rgba(212, 175, 55, 0.15);
-        color: #F3E5AB;
-        border: 1px solid rgba(212, 175, 55, 0.4);
+        background: rgba(212, 175, 55, 0.14);
+        color: #F7E7B4;
+        border: 1px solid rgba(212, 175, 55, 0.45);
         border-radius: 20px;
         padding: 4px 12px;
         font-size: 0.82rem;
@@ -98,10 +97,10 @@ CUSTOM_CSS = """
         margin-bottom: 6px;
     }
 
-    /* Modern Metric Cards */
+    /* Metric Cards */
     .metric-card {
         background: #111424;
-        border: 1px solid #282C40;
+        border: 1px solid #232840;
         border-radius: 12px;
         padding: 16px;
         text-align: center;
@@ -118,8 +117,8 @@ CUSTOM_CSS = """
         font-family: 'Cinzel', serif;
     }
     .metric-lbl {
-        font-size: 0.82rem;
-        color: #A0AABF;
+        font-size: 0.8rem;
+        color: #94A3B8;
         text-transform: uppercase;
         letter-spacing: 0.8px;
         margin-top: 4px;
@@ -127,14 +126,14 @@ CUSTOM_CSS = """
 
     /* Itinerary Timeline Card */
     .timeline-card {
-        background: #131728;
+        background: #121626;
         border-left: 4px solid #D4AF37;
         border-top: 1px solid #232840;
         border-right: 1px solid #232840;
         border-bottom: 1px solid #232840;
         border-radius: 0 12px 12px 0;
         padding: 18px 22px;
-        margin-bottom: 16px;
+        margin-bottom: 14px;
     }
     .timeline-time {
         color: #FFB703;
@@ -169,21 +168,15 @@ CUSTOM_CSS = """
         font-size: 0.8rem;
     }
 
-    /* Sidebar Styling */
-    section[data-testid="stSidebar"] {
-        background-color: #0E111E;
-        border-right: 1px solid #1E2337;
-    }
-
     /* Tab Styling */
     .stTabs [data-baseweb="tab-list"] {
         gap: 8px;
     }
     .stTabs [data-baseweb="tab"] {
-        background-color: #141829;
+        background-color: #121524;
         border-radius: 8px 8px 0 0;
         padding: 10px 20px;
-        color: #A0AABF;
+        color: #94A3B8;
         font-weight: 600;
     }
     .stTabs [aria-selected="true"] {
@@ -259,7 +252,7 @@ with st.sidebar:
         <div style="text-align: center; margin-bottom: 16px;">
             <div style="font-size: 2.3rem;">🪔</div>
             <h2 style="color: #D4AF37; margin: 0; font-size: 1.6rem;">UtsavAI</h2>
-            <div style="font-size: 0.8rem; color: #A0AABF; letter-spacing: 1px;">THE CULTURAL EVENT ARCHITECT</div>
+            <div style="font-size: 0.78rem; color: #94A3B8; letter-spacing: 1px;">THE CULTURAL EVENT ARCHITECT</div>
         </div>
     """, unsafe_allow_html=True)
 
@@ -268,7 +261,7 @@ with st.sidebar:
             "Google Gemini API Key",
             value=os.getenv("GEMINI_API_KEY", ""),
             type="password",
-            help="Optional. Leave blank to run in robust calibrated-preset mode."
+            help="Optional. Leave blank to run in calibrated cultural preset mode."
         )
         if api_key_input:
             os.environ["GEMINI_API_KEY"] = api_key_input
@@ -312,10 +305,6 @@ with st.sidebar:
     with st.expander("🎨 Hospitality & Venue Nuances", expanded=False):
         venue_type = st.selectbox("Venue Style", VENUE_TYPES, index=0)
         dietary = st.selectbox("Culinary Directive", DIETARY_PREFERENCES, index=0)
-        priority_focus = st.selectbox(
-            "Primary Expenditure Focus",
-            ["Balanced Tradition", "Culinary Excellence", "Opulent Mandap & Floral Decor", "Cinematography & Visual Legacy", "Ultra-Luxury Guest Stay"]
-        )
 
     st.markdown("<br>", unsafe_allow_html=True)
     architect_btn = st.button("✨ Architect Master Plan", type="primary", use_container_width=True)
@@ -331,7 +320,6 @@ with st.sidebar:
         st.session_state.venue_type = venue_type
         st.session_state.dietary = dietary
 
-        # Re-initialize budget split from tradition
         trad_meta = CULTURAL_TRADITIONS.get(selected_tradition, {})
         split = trad_meta.get("default_budget_split")
         st.session_state.budget_allocations = BudgetEngine.calculate_initial_allocation(
@@ -339,7 +327,6 @@ with st.sidebar:
             tradition_split=split
         )
 
-        # Update Itinerary from Tradition or AI
         ai_engine = UtsavAIEngine(api_key=api_key_input)
         if ai_engine.is_configured():
             with st.spinner("🤖 Consulting Gemini AI for culturally tailored rituals..."):
@@ -358,7 +345,6 @@ with st.sidebar:
         else:
             st.session_state.itinerary_data = trad_meta.get("rituals", [])
 
-        # Fresh checklists
         st.session_state.checklists = ChecklistEngine.get_default_checklists(
             selected_tradition,
             selected_event
@@ -448,10 +434,22 @@ with tab_itinerary:
 
     itinerary_items = st.session_state.itinerary_data
 
-    # Group rituals by day
-    days_present = sorted(list(set(item.get("day", 1) for item in itinerary_items)))
+    # Filter Bar
+    all_days = sorted(list(set(item.get("day", 1) for item in itinerary_items)))
+    day_options = ["All Days"] + [f"Day {d}" for d in all_days]
 
-    for d in days_present:
+    col_flt1, col_flt2 = st.columns([1.5, 3.5])
+    with col_flt1:
+        selected_day_filter = st.selectbox("Filter Itinerary by Day", day_options, index=0)
+
+    # Filtered list
+    if selected_day_filter == "All Days":
+        display_days = all_days
+    else:
+        target_day = int(selected_day_filter.replace("Day ", ""))
+        display_days = [target_day]
+
+    for d in display_days:
         st.markdown(f"#### 🌅 Day {d} Schedule")
         day_rituals = [r for r in itinerary_items if r.get("day", 1) == d]
 
@@ -468,9 +466,34 @@ with tab_itinerary:
                 </div>
             """, unsafe_allow_html=True)
 
-    # Action Toolbar
+    # Expander to Add Custom Ritual
+    with st.expander("➕ Add Custom Ceremony / Ritual", expanded=False):
+        c_r1, c_r2 = st.columns(2)
+        with c_r1:
+            new_r_day = st.number_input("Day", min_value=1, max_value=st.session_state.event_duration, value=1)
+            new_r_name = st.text_input("Ceremony Name", placeholder="e.g. Ring Ceremony / Family Dinner")
+            new_r_time = st.text_input("Time Window", placeholder="e.g. 05:00 PM - 07:00 PM")
+        with c_r2:
+            new_r_sig = st.text_area("Significance / Purpose", placeholder="Key ceremonial or hospitality objective")
+            new_r_dress = st.text_input("Dress Code", placeholder="e.g. Pastel Formals")
+            new_r_notes = st.text_input("Operational Notes", placeholder="e.g. Stage lighting and acoustic mic")
+
+        if st.button("Add Ceremony to Itinerary"):
+            if new_r_name:
+                st.session_state.itinerary_data.append({
+                    "day": int(new_r_day),
+                    "ritual": new_r_name,
+                    "time": new_r_time or "TBD",
+                    "significance": new_r_sig,
+                    "dress_code": new_r_dress or "Festive",
+                    "notes": new_r_notes or "General coordination"
+                })
+                st.success(f"Added {new_r_name} to Day {new_r_day}!")
+                st.rerun()
+
+    # Action Toolbar: Downloads
     st.markdown("<br>", unsafe_allow_html=True)
-    col_dl1, col_dl2 = st.columns([1, 4])
+    col_dl1, col_dl2, _ = st.columns([1.5, 1.5, 3])
     with col_dl1:
         itinerary_json = json.dumps(itinerary_items, indent=2)
         st.download_button(
@@ -478,6 +501,21 @@ with tab_itinerary:
             data=itinerary_json,
             file_name=f"utsav_itinerary_{st.session_state.tradition.lower().replace(' ', '_')}.json",
             mime="application/json",
+            use_container_width=True
+        )
+    with col_dl2:
+        itinerary_md = ItineraryEngine.export_markdown(
+            st.session_state.event_type,
+            st.session_state.tradition,
+            st.session_state.start_date.strftime("%B %d, %Y"),
+            st.session_state.event_duration,
+            itinerary_items
+        )
+        st.download_button(
+            "📄 Export Itinerary (Markdown)",
+            data=itinerary_md,
+            file_name=f"utsav_itinerary_{st.session_state.tradition.lower().replace(' ', '_')}.md",
+            mime="text/markdown",
             use_container_width=True
         )
 
@@ -509,7 +547,7 @@ with tab_budget:
 
     with col_controls:
         st.markdown("##### 🎛️ Dynamic Category Overrides")
-        st.caption("Override any category cost. The remaining non-locked pillars automatically rebalance!")
+        st.caption("Override any category cost. Non-locked pillars automatically rebalance!")
 
         cat_names = list(allocations.keys())
         cat_to_adjust = st.selectbox("Select Pillar to Adjust", cat_names)
@@ -522,6 +560,10 @@ with tab_budget:
             step=25000.0 if curr == "₹" else 500.0,
             format="%.0f"
         )
+
+        # Lock toggle
+        lock_toggle = st.checkbox("Lock this category amount", value=curr_data.get("locked", False))
+        curr_data["locked"] = lock_toggle
 
         col_b1, col_b2 = st.columns(2)
         with col_b1:
@@ -545,6 +587,27 @@ with tab_budget:
                 )
                 st.rerun()
 
+    # Benchmark Comparison Chart
+    st.markdown("---")
+    col_bench, col_insights = st.columns([1.2, 1])
+
+    with col_bench:
+        st.markdown("##### 📈 Plan vs. Cultural Benchmark Comparison")
+        fig_bar = BudgetEngine.create_benchmark_comparison_chart(allocations)
+        st.plotly_chart(fig_bar, use_container_width=True)
+
+    with col_insights:
+        st.markdown("##### 💡 Financial Advisory Insights")
+        ai_engine = UtsavAIEngine()
+        insights_text = ai_engine.analyze_budget_insights(
+            total_b,
+            allocations,
+            curr,
+            guests,
+            st.session_state.tradition
+        )
+        st.markdown(insights_text)
+
     # Detailed Category Matrix Table
     st.markdown("---")
     st.markdown("##### 📋 Pillar-by-Pillar Expenditure Matrix")
@@ -563,6 +626,15 @@ with tab_budget:
 
     df_budget = pd.DataFrame(table_data)
     st.dataframe(df_budget, use_container_width=True, hide_index=True)
+
+    # Download CSV
+    csv_data = BudgetEngine.export_csv(allocations, total_b, curr, guests)
+    st.download_button(
+        "📥 Download Budget Matrix (CSV)",
+        data=csv_data,
+        file_name="utsav_budget_matrix.csv",
+        mime="text/csv"
+    )
 
     # Cashflow & Vendor Payment Milestones
     st.markdown("---")
@@ -595,19 +667,23 @@ with tab_checklists:
 
     with col_chk1:
         st.markdown("#### 🏛️ Statutory Permits & Clearances")
-        for idx, item in enumerate(checks.get("Mandatory Permits & Regulatory Clearances", [])):
+        permits_list = checks.get("Mandatory Permits & Regulatory Clearances", [])
+        for idx, item in enumerate(permits_list):
             with st.container(border=True):
                 c_box = st.checkbox(
                     f"**{item['item']}** — Deadline: `{item['deadline']}`",
                     value=item.get("status", False),
                     key=f"permit_{idx}"
                 )
+                item["status"] = c_box
                 st.caption(f"**Authority:** {item['authority']}\n\n{item['details']}")
 
         st.markdown("<br>", unsafe_allow_html=True)
         st.markdown("#### 🪔 Sacred Pooja & Samagri Kit")
-        for idx, item in enumerate(checks.get("Auspicious Pooja & Sacred Samagri Kit", [])):
-            st.checkbox(f"{item['item']} `[{item['category']}]`", value=item.get("status", False), key=f"samagri_{idx}")
+        samagri_list = checks.get("Auspicious Pooja & Sacred Samagri Kit", [])
+        for idx, item in enumerate(samagri_list):
+            c_box = st.checkbox(f"{item['item']} `[{item['category']}]`", value=item.get("status", False), key=f"samagri_{idx}")
+            item["status"] = c_box
 
     with col_chk2:
         st.markdown("#### 🤝 Vendor Technical Questionnaires & SLAs")
@@ -620,8 +696,10 @@ with tab_checklists:
 
         st.markdown("<br>", unsafe_allow_html=True)
         st.markdown("#### 🌦️ Weather & Contingency Protocol")
-        for idx, item in enumerate(checks.get("Weather & Seasonal Contingency Kit", [])):
-            st.checkbox(f"{item['item']} `({item['season']})`", value=item.get("status", False), key=f"weather_{idx}")
+        weather_list = checks.get("Weather & Seasonal Contingency Kit", [])
+        for idx, item in enumerate(weather_list):
+            c_box = st.checkbox(f"{item['item']} `({item['season']})`", value=item.get("status", False), key=f"weather_{idx}")
+            item["status"] = c_box
 
 
 # =========================================================
@@ -630,6 +708,36 @@ with tab_checklists:
 with tab_invitations:
     st.markdown("### 💌 Personalized Multi-Tier Guest Invitation Suite")
     st.caption("Segment your guests into tiers to deliver culturally resonant, medium-specific invitations.")
+
+    # Guest Tier Headcount Distribution
+    c_t1, c_t2, c_t3 = st.columns(3)
+    t1_guests = int(guests * 0.20)
+    t2_guests = int(guests * 0.45)
+    t3_guests = guests - (t1_guests + t2_guests)
+
+    with c_t1:
+        st.markdown(f"""
+            <div class="metric-card">
+                <div class="metric-val">~{t1_guests}</div>
+                <div class="metric-lbl">Tier 1: Sacred Family & Elders (20%)</div>
+            </div>
+        """, unsafe_allow_html=True)
+    with c_t2:
+        st.markdown(f"""
+            <div class="metric-card">
+                <div class="metric-val">~{t2_guests}</div>
+                <div class="metric-lbl">Tier 2: Friends & Entourage (45%)</div>
+            </div>
+        """, unsafe_allow_html=True)
+    with c_t3:
+        st.markdown(f"""
+            <div class="metric-card">
+                <div class="metric-val">~{t3_guests}</div>
+                <div class="metric-lbl">Tier 3: Network & Community (35%)</div>
+            </div>
+        """, unsafe_allow_html=True)
+
+    st.markdown("<br>", unsafe_allow_html=True)
 
     with st.expander("📝 Customize Invitation Details", expanded=False):
         c_h1, c_h2 = st.columns(2)
@@ -690,4 +798,3 @@ st.markdown(
     """,
     unsafe_allow_html=True
 )
-
