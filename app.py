@@ -124,7 +124,7 @@ CUSTOM_CSS = """
         margin-top: 4px;
     }
 
-    /* Itinerary Timeline Card */
+    /* Timeline Cards */
     .timeline-card {
         background: #121626;
         border-left: 4px solid #D4AF37;
@@ -166,6 +166,18 @@ CUSTOM_CSS = """
         padding: 3px 10px;
         border-radius: 12px;
         font-size: 0.8rem;
+    }
+
+    /* Crisis Cards */
+    .crisis-card {
+        background: #171221;
+        border-left: 4px solid #EF476F;
+        border-top: 1px solid #2C1A35;
+        border-right: 1px solid #2C1A35;
+        border-bottom: 1px solid #2C1A35;
+        border-radius: 0 12px 12px 0;
+        padding: 16px 20px;
+        margin-bottom: 14px;
     }
 
     /* Tab Styling */
@@ -305,6 +317,7 @@ with st.sidebar:
     with st.expander("🎨 Hospitality & Venue Nuances", expanded=False):
         venue_type = st.selectbox("Venue Style", VENUE_TYPES, index=0)
         dietary = st.selectbox("Culinary Directive", DIETARY_PREFERENCES, index=0)
+        custom_notes = st.text_input("Special Traditions / Notes", placeholder="e.g. Include morning Anand Karaj / Sangeet garba fusion")
 
     st.markdown("<br>", unsafe_allow_html=True)
     architect_btn = st.button("✨ Architect Master Plan", type="primary", use_container_width=True)
@@ -336,7 +349,8 @@ with st.sidebar:
                     event_duration,
                     guest_count,
                     dietary,
-                    venue_type
+                    venue_type,
+                    user_notes=custom_notes
                 )
                 if "schedule" in ai_resp and ai_resp["schedule"]:
                     st.session_state.itinerary_data = ai_resp["schedule"]
@@ -420,7 +434,7 @@ st.markdown("<br>", unsafe_allow_html=True)
 tab_itinerary, tab_budget, tab_checklists, tab_invitations = st.tabs([
     "📅 Master Itinerary & Muhurats",
     "💰 Smart Dynamic Budget Matrix",
-    "📋 Vendor & Ritual Checklists",
+    "📋 Task Dependency & Crisis Matrix",
     "💌 Personalized Invitation Suite"
 ])
 
@@ -456,12 +470,12 @@ with tab_itinerary:
         for rit in day_rituals:
             st.markdown(f"""
                 <div class="timeline-card">
-                    <div class="timeline-time">⏰ {rit.get('time', 'TBD')}</div>
+                    <div class="timeline-time">⏰ {rit.get('time', 'TBD')} {('• ' + rit.get('phase')) if rit.get('phase') else ''}</div>
                     <div class="timeline-title">{rit.get('ritual', 'Ceremony')}</div>
                     <div class="timeline-body">{rit.get('significance', '')}</div>
                     <div style="margin-top: 10px;">
                         <span class="tag-dress">👗 <b>Attire Vibe:</b> {rit.get('dress_code', 'Traditional Festive')}</span>
-                        <span class="tag-notes" style="margin-left: 8px;">📌 <b>Operational Note:</b> {rit.get('notes', 'Coordinate with priest and audio')}</span>
+                        <span class="tag-notes" style="margin-left: 8px;">📌 <b>Operational Note:</b> {rit.get('operational_notes', rit.get('notes', 'Coordinate with priest and audio'))}</span>
                     </div>
                 </div>
             """, unsafe_allow_html=True)
@@ -486,7 +500,7 @@ with tab_itinerary:
                     "time": new_r_time or "TBD",
                     "significance": new_r_sig,
                     "dress_code": new_r_dress or "Festive",
-                    "notes": new_r_notes or "General coordination"
+                    "operational_notes": new_r_notes or "General coordination"
                 })
                 st.success(f"Added {new_r_name} to Day {new_r_day}!")
                 st.rerun()
@@ -561,7 +575,6 @@ with tab_budget:
             format="%.0f"
         )
 
-        # Lock toggle
         lock_toggle = st.checkbox("Lock this category amount", value=curr_data.get("locked", False))
         curr_data["locked"] = lock_toggle
 
@@ -587,7 +600,35 @@ with tab_budget:
                 )
                 st.rerun()
 
-    # Benchmark Comparison Chart
+        # Prompt Rebalance Input
+        with st.expander("🤖 Rebalance via Natural Language AI Prompt", expanded=False):
+            rebalance_prompt_input = st.text_input(
+                "Directive",
+                placeholder="e.g., Cut catering cost by 10% and allocate difference to Photography and Mandap"
+            )
+            if st.button("Apply AI Rebalance"):
+                ai_engine = UtsavAIEngine()
+                if ai_engine.is_configured() and rebalance_prompt_input:
+                    with st.spinner("🤖 Recalculating allocations with Gemini..."):
+                        reb_ai = ai_engine.rebalance_ai_budget(
+                            total_b,
+                            guests,
+                            st.session_state.tradition,
+                            allocations,
+                            rebalance_prompt_input,
+                            currency=curr
+                        )
+                        if "categories" in reb_ai:
+                            for c_k, c_v in reb_ai["categories"].items():
+                                if c_k in allocations:
+                                    allocations[c_k]["amount"] = float(c_v.get("amount", allocations[c_k]["amount"]))
+                                    allocations[c_k]["percentage"] = float(c_v.get("percentage", allocations[c_k]["percentage"]))
+                            st.success("Rebalanced via AI prompt successfully!")
+                            st.rerun()
+                else:
+                    st.info("💡 Enter your prompt and configure Gemini API key in sidebar to activate deep AI rebalancing.")
+
+    # Benchmark Comparison Chart & Financial Insights
     st.markdown("---")
     col_bench, col_insights = st.columns([1.2, 1])
 
@@ -655,38 +696,78 @@ with tab_budget:
 
 
 # =========================================================
-# TAB 3: Localized Vendor & Ritual Checklists
+# TAB 3: Task Dependency & Crisis Matrix
 # =========================================================
 with tab_checklists:
-    st.markdown("### 📋 Localized Vendor, Permitting & Ritual Checklists")
-    st.caption("Actionable task lists, regulatory statutory compliance, and vendor interview questionnaires.")
+    st.markdown("### 📋 Task Dependency Matrix & Crisis Mitigation Engine")
+    st.caption("Time-phased task governance, statutory clearances, vendor SLAs, and emergency crisis failovers.")
 
     checks = st.session_state.checklists
+    task_matrix = checks.get("Time-Phased Task Matrix", [])
+    crisis_protocols = checks.get("Crisis & Risk Mitigation Protocols", [])
 
-    col_chk1, col_chk2 = st.columns(2)
+    # Sub-tabs for clean organization
+    subtab_phases, subtab_crisis, subtab_vendors, subtab_samagri = st.tabs([
+        "⏳ Time-Phased Dependency Matrix",
+        "🚨 Crisis & Weather Contingencies",
+        "🤝 Vendor SLAs & Questionnaires",
+        "🪔 Sacred Pooja & Samagri Kit"
+    ])
 
-    with col_chk1:
-        st.markdown("#### 🏛️ Statutory Permits & Clearances")
-        permits_list = checks.get("Mandatory Permits & Regulatory Clearances", [])
-        for idx, item in enumerate(permits_list):
-            with st.container(border=True):
-                c_box = st.checkbox(
-                    f"**{item['item']}** — Deadline: `{item['deadline']}`",
-                    value=item.get("status", False),
-                    key=f"permit_{idx}"
-                )
-                item["status"] = c_box
-                st.caption(f"**Authority:** {item['authority']}\n\n{item['details']}")
+    with subtab_phases:
+        st.markdown("#### ⏳ Execution Countdown & Statutory Dependencies")
+        for phase_group in task_matrix:
+            with st.expander(f"{phase_group['badge']} — {phase_group['phase']}", expanded=True):
+                for idx, t in enumerate(phase_group["tasks"]):
+                    crit_color = "#EF476F" if t.get("criticality") == "Critical" else "#FFB703"
+                    col_t1, col_t2 = st.columns([3.5, 1])
+                    with col_t1:
+                        c_box = st.checkbox(
+                            f"**{t['task']}**",
+                            value=t.get("status", False),
+                            key=f"task_{phase_group['phase']}_{idx}"
+                        )
+                        t["status"] = c_box
+                        st.caption(f"📌 **Dependency:** {t['dependency']}")
+                        st.caption(f"🏛️ **Authority / Lead:** `{t['authority']}` | 🏷️ **Category:** `{t['category']}`")
+                    with col_t2:
+                        st.markdown(f"""
+                            <div style="text-align: right; margin-top: 5px;">
+                                <span style="background: rgba(212,175,55,0.15); color: {crit_color}; border: 1px solid {crit_color}; padding: 3px 8px; border-radius: 8px; font-size: 0.75rem; font-weight: 700;">
+                                    {t.get('criticality', 'Normal')}
+                                </span>
+                                <div style="font-size: 0.8rem; color: #94A3B8; margin-top: 4px;">Deadline: <b>{t['deadline']}</b></div>
+                            </div>
+                        """, unsafe_allow_html=True)
+                    st.markdown("<hr style='margin: 8px 0; border-color: #1F2438;'>", unsafe_allow_html=True)
 
-        st.markdown("<br>", unsafe_allow_html=True)
-        st.markdown("#### 🪔 Sacred Pooja & Samagri Kit")
-        samagri_list = checks.get("Auspicious Pooja & Sacred Samagri Kit", [])
-        for idx, item in enumerate(samagri_list):
-            c_box = st.checkbox(f"{item['item']} `[{item['category']}]`", value=item.get("status", False), key=f"samagri_{idx}")
-            item["status"] = c_box
+    with subtab_crisis:
+        st.markdown("#### 🚨 Emergency Crisis & Weather Mitigation Protocols")
+        st.caption("Pre-calibrated failover runbooks to safeguard the celebration against severe disruptions.")
 
-    with col_chk2:
-        st.markdown("#### 🤝 Vendor Technical Questionnaires & SLAs")
+        for c in crisis_protocols:
+            st.markdown(f"""
+                <div class="crisis-card">
+                    <div style="display: flex; justify-content: space-between; align-items: center;">
+                        <span style="font-size: 1.1rem; font-weight: 700; color: #FFFFFF;">{c['risk']}</span>
+                        <span style="background: rgba(239, 71, 111, 0.2); color: #FF7096; border: 1px solid #EF476F; padding: 2px 10px; border-radius: 12px; font-size: 0.75rem; font-weight: 700;">
+                            {c['severity']}
+                        </span>
+                    </div>
+                    <div style="color: #FFB703; font-size: 0.85rem; margin: 6px 0;"><b>Trigger Indicator:</b> {c['trigger_indicator']}</div>
+                    <div style="color: #E2E8F0; font-size: 0.92rem; margin-bottom: 8px;"><b>Mitigation Protocol:</b> {c['mitigation_protocol']}</div>
+                    <div style="background: #111424; padding: 10px 14px; border-radius: 8px; margin-top: 8px;">
+                        <div style="font-size: 0.82rem; color: #D4AF37; font-weight: 600; margin-bottom: 4px;">⚡ Immediate Action Cues:</div>
+                        {"".join([f"<div style='font-size: 0.82rem; color: #CBD5E1;'>• {step}</div>" for step in c['immediate_steps']])}
+                    </div>
+                    <div style="font-size: 0.8rem; color: #94A3B8; margin-top: 8px;">
+                        👤 <b>Command Officer / Lead:</b> <span style="color: #F8FAFC;">{c['lead_poc']}</span>
+                    </div>
+                </div>
+            """, unsafe_allow_html=True)
+
+    with subtab_vendors:
+        st.markdown("#### 🤝 Vendor Technical Questionnaires & Penalty SLAs")
         for v in checks.get("Vendor Critical Questionnaires & SLAs", []):
             with st.expander(f"📌 {v['vendor_type']}", expanded=True):
                 st.markdown("**Questions to Mandate Before Signing:**")
@@ -694,12 +775,20 @@ with tab_checklists:
                     st.markdown(f"- {q}")
                 st.info(f"💡 **SLA Pro-Tip:** {v['sla_tip']}")
 
-        st.markdown("<br>", unsafe_allow_html=True)
-        st.markdown("#### 🌦️ Weather & Contingency Protocol")
-        weather_list = checks.get("Weather & Seasonal Contingency Kit", [])
-        for idx, item in enumerate(weather_list):
-            c_box = st.checkbox(f"{item['item']} `({item['season']})`", value=item.get("status", False), key=f"weather_{idx}")
-            item["status"] = c_box
+    with subtab_samagri:
+        st.markdown("#### 🪔 Sacred Pooja & Samagri Kit Checklist")
+        samagri_list = checks.get("Auspicious Pooja & Sacred Samagri Kit", [])
+        col_s1, col_s2 = st.columns(2)
+        half_len = (len(samagri_list) + 1) // 2
+
+        with col_s1:
+            for idx, item in enumerate(samagri_list[:half_len]):
+                c_box = st.checkbox(f"{item['item']} `[{item['category']}]`", value=item.get("status", False), key=f"samagri_a_{idx}")
+                item["status"] = c_box
+        with col_s2:
+            for idx, item in enumerate(samagri_list[half_len:], start=half_len):
+                c_box = st.checkbox(f"{item['item']} `[{item['category']}]`", value=item.get("status", False), key=f"samagri_b_{idx}")
+                item["status"] = c_box
 
 
 # =========================================================
@@ -709,7 +798,6 @@ with tab_invitations:
     st.markdown("### 💌 Personalized Multi-Tier Guest Invitation Suite")
     st.caption("Segment your guests into tiers to deliver culturally resonant, medium-specific invitations.")
 
-    # Guest Tier Headcount Distribution
     c_t1, c_t2, c_t3 = st.columns(3)
     t1_guests = int(guests * 0.20)
     t2_guests = int(guests * 0.45)

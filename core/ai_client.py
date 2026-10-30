@@ -1,7 +1,11 @@
-"""AI Orchestration Layer for UtsavAI utilizing Google Gemini with fallback logic."""
+"""
+AI Orchestration Layer for UtsavAI.
+Utilizes Google Gemini with structured JSON mode and robust fallback architecture.
+"""
 
 import os
 import json
+import re
 from typing import Dict, Any, Optional
 
 try:
@@ -17,9 +21,18 @@ try:
 except ImportError:
     GENAI_V1_AVAILABLE = False
 
+from core.prompts import (
+    TIMELINE_SYSTEM_PROMPT,
+    TIMELINE_USER_TEMPLATE,
+    BUDGET_SYSTEM_PROMPT,
+    BUDGET_REBALANCE_PROMPT,
+    CRISIS_DEPENDENCY_SYSTEM_PROMPT,
+    CRISIS_USER_TEMPLATE
+)
+
 
 class UtsavAIEngine:
-    """Handles LLM prompts for cultural timelines, budget intelligence, and copy generation."""
+    """Handles LLM calls for cultural timelines, budget rebalancing chains, and crisis protocols."""
 
     def __init__(self, api_key: Optional[str] = None):
         self.api_key = api_key or os.getenv("GEMINI_API_KEY")
@@ -48,6 +61,17 @@ class UtsavAIEngine:
     def is_configured(self) -> bool:
         return self.client is not None
 
+    def _clean_json_text(self, text: str) -> str:
+        """Strip markdown fences, whitespace, and leading/trailing non-JSON chars."""
+        cleaned = text.strip()
+        if cleaned.startswith("```json"):
+            cleaned = cleaned[7:]
+        elif cleaned.startswith("```"):
+            cleaned = cleaned[3:]
+        if cleaned.endswith("```"):
+            cleaned = cleaned[:-3]
+        return cleaned.strip()
+
     def generate_custom_itinerary(
         self,
         event_type: str,
@@ -56,71 +80,209 @@ class UtsavAIEngine:
         guest_count: int,
         dietary: str,
         venue_type: str,
-        notes: str = ""
+        user_notes: str = ""
     ) -> Dict[str, Any]:
-        """Generate an AI-powered custom day-by-day ritual timeline."""
+        """Module 1: Generates an AI-powered day-by-day ritual timeline."""
         if not self.is_configured():
             return {"source": "preset", "message": "Using calibrated cultural knowledge-base."}
 
-        prompt = f"""
-You are the world's leading Cultural Event Architect & Muhurat Specialist for large-scale Indian & fusion celebrations.
-Generate a structured, authentic {days}-day itinerary for:
-- Event: {event_type}
-- Tradition/Culture: {tradition}
-- Expected Guests: {guest_count}
-- Dietary Style: {dietary}
-- Venue Type: {venue_type}
-- Special Notes: {notes}
+        user_prompt = TIMELINE_USER_TEMPLATE.format(
+            duration_days=days,
+            event_type=event_type,
+            tradition=tradition,
+            guest_count=guest_count,
+            venue_type=venue_type,
+            dietary=dietary,
+            user_notes=user_notes or "Adhere strictly to auspicious Vedic muhurat traditions."
+        )
 
-Ensure every ritual includes:
-1. Day number and precise auspicious timing range (e.g., '09:15 AM - 11:30 AM')
-2. Ritual Name & Sacred Significance
-3. Recommended Dress Code Theme & Color Palette
-4. Logistical & Audio/Pooja Setup Notes
+        try:
+            if GENAI_V2_AVAILABLE and isinstance(self.client, genai.Client):
+                response = self.client.models.generate_content(
+                    model='gemini-2.5-flash',
+                    contents=user_prompt,
+                    config=types.GenerateContentConfig(
+                        system_instruction=TIMELINE_SYSTEM_PROMPT,
+                        temperature=0.3,
+                        response_mime_type="application/json"
+                    )
+                )
+                raw_text = response.text
+            elif GENAI_V1_AVAILABLE:
+                model = legacy_genai.GenerativeModel(
+                    "gemini-1.5-flash",
+                    system_instruction=TIMELINE_SYSTEM_PROMPT
+                )
+                response = model.generate_content(
+                    user_prompt,
+                    generation_config={"response_mime_type": "application/json", "temperature": 0.3}
+                )
+                raw_text = response.text
+            else:
+                return {"source": "preset"}
 
-Format your output STRICTLY as a valid JSON object matching this schema:
-{{
-  "overview": "Short 2-sentence vision statement for this celebration",
-  "schedule": [
-    {{
-      "day": 1,
-      "time": "09:30 AM - 11:30 AM",
-      "ritual": "Ceremony Name",
-      "significance": "Deep cultural purpose",
-      "dress_code": "Attire suggestions and palette",
-      "notes": "Key samagri or coordination instructions"
-    }}
-  ]
-}}
-Do NOT wrap in markdown backticks other than valid json text.
-"""
+            cleaned = self._clean_json_text(raw_text)
+            data = json.loads(cleaned)
+            data["source"] = "gemini"
+            return data
+        except Exception as e:
+            return {"source": "preset", "error": str(e)}
+
+    def generate_ai_budget(
+        self,
+        total_budget: float,
+        guest_count: int,
+        tradition: str,
+        venue_type: str,
+        currency: str = "₹",
+        priorities: str = "Balanced Cultural Hospitality"
+    ) -> Dict[str, Any]:
+        """Module 2: Generates structured budget breakdown with vendor line items."""
+        if not self.is_configured():
+            return {"source": "preset"}
+
+        prompt = (
+            f"Allocate total budget of {currency}{total_budget:,.2f} for a {tradition} celebration with "
+            f"{guest_count} guests at a {venue_type}. Primary focus: {priorities}. Output strict JSON matching the schema."
+        )
+
         try:
             if GENAI_V2_AVAILABLE and isinstance(self.client, genai.Client):
                 response = self.client.models.generate_content(
                     model='gemini-2.5-flash',
                     contents=prompt,
                     config=types.GenerateContentConfig(
-                        temperature=0.4,
+                        system_instruction=BUDGET_SYSTEM_PROMPT,
+                        temperature=0.2,
                         response_mime_type="application/json"
                     )
                 )
-                text = response.text
+                raw_text = response.text
             elif GENAI_V1_AVAILABLE:
-                model = legacy_genai.GenerativeModel("gemini-1.5-flash")
+                model = legacy_genai.GenerativeModel(
+                    "gemini-1.5-flash",
+                    system_instruction=BUDGET_SYSTEM_PROMPT
+                )
                 response = model.generate_content(
                     prompt,
-                    generation_config={"response_mime_type": "application/json", "temperature": 0.4}
+                    generation_config={"response_mime_type": "application/json", "temperature": 0.2}
                 )
-                text = response.text
+                raw_text = response.text
             else:
                 return {"source": "preset"}
 
-            # Parse JSON
-            cleaned = text.strip()
-            if cleaned.startswith("```json"):
-                cleaned = cleaned[7:-3].strip()
-            elif cleaned.startswith("```"):
-                cleaned = cleaned[3:-3].strip()
+            cleaned = self._clean_json_text(raw_text)
+            data = json.loads(cleaned)
+            data["source"] = "gemini"
+            return data
+        except Exception as e:
+            return {"source": "preset", "error": str(e)}
+
+    def rebalance_ai_budget(
+        self,
+        total_budget: float,
+        guest_count: int,
+        tradition: str,
+        current_allocations: Dict[str, Any],
+        user_instruction: str,
+        currency: str = "₹"
+    ) -> Dict[str, Any]:
+        """Module 2 Chain: Rebalances budget categories based on natural language overrides."""
+        if not self.is_configured():
+            return {"source": "preset"}
+
+        alloc_summary = {
+            k: {"amount": v["amount"], "locked": v.get("locked", False)}
+            for k, v in current_allocations.items()
+        }
+
+        prompt = BUDGET_REBALANCE_PROMPT.format(
+            currency=currency,
+            total_budget=total_budget,
+            guest_count=guest_count,
+            tradition=tradition,
+            current_allocations_json=json.dumps(alloc_summary),
+            user_instruction=user_instruction
+        )
+
+        try:
+            if GENAI_V2_AVAILABLE and isinstance(self.client, genai.Client):
+                response = self.client.models.generate_content(
+                    model='gemini-2.5-flash',
+                    contents=prompt,
+                    config=types.GenerateContentConfig(
+                        system_instruction=BUDGET_SYSTEM_PROMPT,
+                        temperature=0.2,
+                        response_mime_type="application/json"
+                    )
+                )
+                raw_text = response.text
+            elif GENAI_V1_AVAILABLE:
+                model = legacy_genai.GenerativeModel(
+                    "gemini-1.5-flash",
+                    system_instruction=BUDGET_SYSTEM_PROMPT
+                )
+                response = model.generate_content(
+                    prompt,
+                    generation_config={"response_mime_type": "application/json", "temperature": 0.2}
+                )
+                raw_text = response.text
+            else:
+                return {"source": "preset"}
+
+            cleaned = self._clean_json_text(raw_text)
+            data = json.loads(cleaned)
+            data["source"] = "gemini"
+            return data
+        except Exception as e:
+            return {"source": "preset", "error": str(e)}
+
+    def generate_crisis_matrix(
+        self,
+        event_type: str,
+        tradition: str,
+        venue_type: str,
+        guest_count: int,
+        season_context: str = "Peak Wedding Season / Outdoor Lawn Setup"
+    ) -> Dict[str, Any]:
+        """Module 3: Generates time-phased dependency matrix and crisis protocols."""
+        if not self.is_configured():
+            return {"source": "preset"}
+
+        user_prompt = CRISIS_USER_TEMPLATE.format(
+            event_type=event_type,
+            tradition=tradition,
+            venue_type=venue_type,
+            guest_count=guest_count,
+            season_context=season_context
+        )
+
+        try:
+            if GENAI_V2_AVAILABLE and isinstance(self.client, genai.Client):
+                response = self.client.models.generate_content(
+                    model='gemini-2.5-flash',
+                    contents=user_prompt,
+                    config=types.GenerateContentConfig(
+                        system_instruction=CRISIS_DEPENDENCY_SYSTEM_PROMPT,
+                        temperature=0.3,
+                        response_mime_type="application/json"
+                    )
+                )
+                raw_text = response.text
+            elif GENAI_V1_AVAILABLE:
+                model = legacy_genai.GenerativeModel(
+                    "gemini-1.5-flash",
+                    system_instruction=CRISIS_DEPENDENCY_SYSTEM_PROMPT
+                )
+                response = model.generate_content(
+                    user_prompt,
+                    generation_config={"response_mime_type": "application/json", "temperature": 0.3}
+                )
+                raw_text = response.text
+            else:
+                return {"source": "preset"}
+
+            cleaned = self._clean_json_text(raw_text)
             data = json.loads(cleaned)
             data["source"] = "gemini"
             return data
@@ -171,4 +333,3 @@ Return clean markdown format with bold headers and emoji markers.
             pass
 
         return "💡 Allocation aligned with regional benchmarks. Verify live food counter minimum guarantees before signing catering agreements."
-

@@ -53,3 +53,4 @@ class ItineraryEngine:
             "morning_rituals": len([r for r in schedule if "AM" in r.get("time", "")]),
             "evening_rituals": len([r for r in schedule if "PM" in r.get("time", "") and ("06:" in r.get("time", "") or "07:" in r.get("time", "") or "08:" in r.get("time", "") or "09:" in r.get("time", ""))])
         }
+
