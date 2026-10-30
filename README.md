@@ -147,7 +147,35 @@ Open your browser at `http://localhost:8501`.
 
 ---
 
-## 6. Project Structure
+## 6. Streamlit Community Cloud Deployment Guide
+
+Follow these steps to deploy **UtsavAI** to the web in under 2 minutes:
+
+1. **Sign in to Streamlit Cloud:**
+   - Navigate to [share.streamlit.io](https://share.streamlit.io) and sign in with your GitHub account.
+
+2. **Create New App:**
+   - Click **"New app"** (or **"Create app"**).
+   - **Repository:** `Tirth3929v/utsavai`
+   - **Branch:** `main`
+   - **Main file path:** `app.py`
+   - **App URL:** Customize if desired (e.g., `utsavai.streamlit.app`).
+
+3. **Configure Secrets (Optional & Recommended):**
+   - Click **Advanced Settings** before launching (or go to **App Settings > Secrets**).
+   - Enter your Gemini API key in TOML format:
+     ```toml
+     GEMINI_API_KEY = "your-google-gemini-api-key-here"
+     ```
+   - Click **Save**.
+
+4. **Deploy & Verify:**
+   - Click **Deploy!**
+   - Streamlit will automatically install dependencies from `requirements.txt` and launch your festive event architect live!
+
+---
+
+## 7. Project Structure
 
 ```
 utsavai/

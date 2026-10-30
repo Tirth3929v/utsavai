@@ -31,11 +31,26 @@ from core.prompts import (
 )
 
 
+def _resolve_api_key(explicit_key: Optional[str] = None) -> Optional[str]:
+    """Safely resolve API key from parameter, Streamlit secrets, or environment variable."""
+    if explicit_key and explicit_key.strip():
+        return explicit_key.strip()
+    try:
+        import streamlit as st
+        if hasattr(st, "secrets") and "GEMINI_API_KEY" in st.secrets:
+            key = st.secrets["GEMINI_API_KEY"]
+            if key and key.strip():
+                return key.strip()
+    except Exception:
+        pass
+    return os.getenv("GEMINI_API_KEY")
+
+
 class UtsavAIEngine:
     """Handles LLM calls for cultural timelines, budget rebalancing chains, and crisis protocols."""
 
     def __init__(self, api_key: Optional[str] = None):
-        self.api_key = api_key or os.getenv("GEMINI_API_KEY")
+        self.api_key = _resolve_api_key(api_key)
         self.client = None
         self._init_client()
 

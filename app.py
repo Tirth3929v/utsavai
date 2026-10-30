@@ -268,12 +268,22 @@ with st.sidebar:
         </div>
     """, unsafe_allow_html=True)
 
+    # Secrets Detection for Streamlit Cloud
+    has_secret_key = False
+    try:
+        if hasattr(st, "secrets") and "GEMINI_API_KEY" in st.secrets and st.secrets["GEMINI_API_KEY"]:
+            has_secret_key = True
+    except Exception:
+        pass
+
     with st.expander("🔑 AI Intelligence & API Keys", expanded=False):
+        if has_secret_key:
+            st.success("🔒 GEMINI_API_KEY detected via Streamlit Secrets!")
         api_key_input = st.text_input(
             "Google Gemini API Key",
-            value=os.getenv("GEMINI_API_KEY", ""),
+            value="" if has_secret_key else os.getenv("GEMINI_API_KEY", ""),
             type="password",
-            help="Optional. Leave blank to run in calibrated cultural preset mode."
+            help="Optional. Leave blank to run in calibrated cultural preset mode, or if configured in Streamlit Cloud Secrets."
         )
         if api_key_input:
             os.environ["GEMINI_API_KEY"] = api_key_input
@@ -392,38 +402,40 @@ st.markdown(f"""
     </div>
 """, unsafe_allow_html=True)
 
-# Top 4 KPIs
-kpi1, kpi2, kpi3, kpi4 = st.columns(4)
-with kpi1:
-    st.markdown(f"""
-        <div class="metric-card">
-            <div class="metric-val">{curr}{total_b:,.0f}</div>
-            <div class="metric-lbl">Total Capital Reserve</div>
-        </div>
-    """, unsafe_allow_html=True)
-with kpi2:
-    st.markdown(f"""
-        <div class="metric-card">
-            <div class="metric-val">{curr}{cost_per_guest:,.0f}</div>
-            <div class="metric-lbl">Per-Guest Investment</div>
-        </div>
-    """, unsafe_allow_html=True)
-with kpi3:
-    rituals_count = len(st.session_state.itinerary_data)
-    st.markdown(f"""
-        <div class="metric-card">
-            <div class="metric-val">{rituals_count}</div>
-            <div class="metric-lbl">Auspicious Milestones</div>
-        </div>
-    """, unsafe_allow_html=True)
-with kpi4:
-    start_fmt = st.session_state.start_date.strftime("%d %b %Y")
-    st.markdown(f"""
-        <div class="metric-card">
-            <div class="metric-val">{start_fmt}</div>
-            <div class="metric-lbl">Shubh Muhurat Date</div>
-        </div>
-    """, unsafe_allow_html=True)
+# Top 4 KPIs with st.metric & Delta Indicators
+total_allocated = sum(d["amount"] for d in st.session_state.budget_allocations.values())
+var = total_b - total_allocated
+days_until_event = (st.session_state.start_date - datetime.date.today()).days
+
+with st.container(border=True):
+    kpi1, kpi2, kpi3, kpi4 = st.columns(4)
+    with kpi1:
+        st.metric(
+            label="Total Budget vs Estimated Expenses",
+            value=f"{curr}{total_b:,.0f}",
+            delta="Balanced (100%)" if abs(var) < 1.0 else (f"{curr}{var:,.0f} reserve" if var > 0 else f"-{curr}{abs(var):,.0f} deficit"),
+            delta_color="normal" if var >= 0 else "inverse"
+        )
+    with kpi2:
+        st.metric(
+            label="Per-Guest Investment",
+            value=f"{curr}{cost_per_guest:,.0f}",
+            delta=f"{guests:,} Total Guests"
+        )
+    with kpi3:
+        rituals_count = len(st.session_state.itinerary_data)
+        st.metric(
+            label="Auspicious Milestones",
+            value=f"{rituals_count} Vidhis",
+            delta=f"{days}-Day Schedule"
+        )
+    with kpi4:
+        start_fmt = st.session_state.start_date.strftime("%d %b %Y")
+        st.metric(
+            label="Shubh Muhurat Date",
+            value=start_fmt,
+            delta=f"T-{days_until_event} Days" if days_until_event >= 0 else "Event Passed"
+        )
 
 st.markdown("<br>", unsafe_allow_html=True)
 
@@ -542,6 +554,40 @@ with tab_budget:
     st.caption("Pillar-by-pillar capital distribution with automatic rebalancing logic and contingency buffers.")
 
     allocations = st.session_state.budget_allocations
+    total_allocated = sum(d["amount"] for d in allocations.values())
+    var = total_b - total_allocated
+
+    # Visual Metric Cards
+    with st.container(border=True):
+        b_m1, b_m2, b_m3, b_m4 = st.columns(4)
+        with b_m1:
+            st.metric(
+                "Total Target Capital",
+                f"{curr}{total_b:,.0f}",
+                delta="Aligned (100%)" if abs(var) < 1 else f"{curr}{var:+,.0f} Variance",
+                delta_color="off" if abs(var) < 1 else ("normal" if var > 0 else "inverse")
+            )
+        with b_m2:
+            st.metric(
+                "Estimated Total Expenses",
+                f"{curr}{total_allocated:,.0f}",
+                delta=f"{(total_allocated/total_b)*100:.1f}% of Target" if total_b > 0 else "0%"
+            )
+        with b_m3:
+            st.metric(
+                "Per-Guest Spend",
+                f"{curr}{(total_allocated/guests):,.0f}" if guests > 0 else "0",
+                delta=f"{guests} Attendees"
+            )
+        with b_m4:
+            buf_amt = allocations.get("Buffer Reserve", {}).get("amount", 0)
+            st.metric(
+                "Contingency Reserve",
+                f"{curr}{buf_amt:,.0f}",
+                delta=f"{allocations.get('Buffer Reserve', {}).get('percentage', 0)}% Liquidity"
+            )
+
+    st.markdown("<br>", unsafe_allow_html=True)
 
     col_chart, col_controls = st.columns([1.1, 1.2])
 
