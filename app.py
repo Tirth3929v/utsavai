@@ -260,7 +260,8 @@ def initialize_state():
     if "checklists" not in st.session_state:
         st.session_state.checklists = ChecklistEngine.get_default_checklists(
             st.session_state.tradition,
-            st.session_state.event_type
+            st.session_state.event_type,
+            religion=st.session_state.selected_religion
         )
 
 initialize_state()
@@ -403,7 +404,7 @@ with st.sidebar:
 
         ai_engine = UtsavAIEngine(api_key=api_key_input)
         if ai_engine.is_configured():
-            with st.spinner("🤖 Consulting Gemini AI for culturally tailored rituals..."):
+            with st.spinner(f"🤖 Consulting Gemini AI for authentic {selected_religion} traditions..."):
                 ai_resp = ai_engine.generate_custom_itinerary(
                     selected_event,
                     selected_tradition,
@@ -411,18 +412,27 @@ with st.sidebar:
                     guest_count,
                     dietary,
                     venue_type,
-                    user_notes=custom_notes
+                    user_notes=custom_notes,
+                    religion=selected_religion,
+                    sub_tradition=selected_tradition
                 )
                 if "schedule" in ai_resp and ai_resp["schedule"]:
                     st.session_state.itinerary_data = ai_resp["schedule"]
                 else:
-                    st.session_state.itinerary_data = trad_meta.get("rituals", [])
+                    preset_rituals = trad_meta.get("rituals", [])
+                    st.session_state.itinerary_data = [
+                        r for r in preset_rituals if r.get("day", 1) <= event_duration
+                    ] if any(r.get("day", 1) <= event_duration for r in preset_rituals) else preset_rituals
         else:
-            st.session_state.itinerary_data = trad_meta.get("rituals", [])
+            preset_rituals = trad_meta.get("rituals", [])
+            st.session_state.itinerary_data = [
+                r for r in preset_rituals if r.get("day", 1) <= event_duration
+            ] if any(r.get("day", 1) <= event_duration for r in preset_rituals) else preset_rituals
 
         st.session_state.checklists = ChecklistEngine.get_default_checklists(
             selected_tradition,
-            selected_event
+            selected_event,
+            religion=selected_religion
         )
         st.success("✨ Master plan architected successfully!")
         st.rerun()
@@ -475,15 +485,45 @@ with st.container(border=True):
         )
     with kpi3:
         rituals_count = len(st.session_state.itinerary_data)
+        rel_str = st.session_state.get("selected_religion", "Hinduism").lower()
+        if "christian" in rel_str:
+            milestone_label = "Sacred Ceremonies"
+            milestone_unit = "Events"
+            date_label = "Celebration Date"
+        elif "islam" in rel_str:
+            milestone_label = "Mubarak Milestones"
+            milestone_unit = "Rasm"
+            date_label = "Mubarak Date"
+        elif "juda" in rel_str:
+            milestone_label = "Simcha Milestones"
+            milestone_unit = "Traditions"
+            date_label = "Simcha Date"
+        elif "sikh" in rel_str:
+            milestone_label = "Gurmat Milestones"
+            milestone_unit = "Ceremonies"
+            date_label = "Anand Karaj Date"
+        elif "buddh" in rel_str or "east asian" in rel_str:
+            milestone_label = "Auspicious Milestones"
+            milestone_unit = "Blessings"
+            date_label = "Auspicious Date"
+        elif "fusion" in rel_str or "contemporary" in rel_str:
+            milestone_label = "Celebration Milestones"
+            milestone_unit = "Events"
+            date_label = "Celebration Date"
+        else:
+            milestone_label = "Auspicious Milestones"
+            milestone_unit = "Vidhis"
+            date_label = "Shubh Muhurat Date"
+
         st.metric(
-            label="Auspicious Milestones",
-            value=f"{rituals_count} Vidhis",
+            label=milestone_label,
+            value=f"{rituals_count} {milestone_unit}",
             delta=f"{days}-Day Schedule"
         )
     with kpi4:
         start_fmt = st.session_state.start_date.strftime("%d %b %Y")
         st.metric(
-            label="Shubh Muhurat Date",
+            label=date_label,
             value=start_fmt,
             delta=f"T-{days_until_event} Days" if days_until_event >= 0 else "Event Passed"
         )
@@ -495,7 +535,7 @@ st.markdown("<br>", unsafe_allow_html=True)
 # Multi-Tab Navigation
 # ---------------------------------------------------------
 tab_itinerary, tab_budget, tab_checklists, tab_invitations, tab_directory = st.tabs([
-    "📅 Master Itinerary & Muhurats",
+    "📅 Master Itinerary & Schedule",
     "💰 Smart Dynamic Budget Matrix",
     "📋 Task Dependency & Crisis Matrix",
     "💌 Personalized Invitation Suite",
@@ -504,11 +544,31 @@ tab_itinerary, tab_budget, tab_checklists, tab_invitations, tab_directory = st.t
 
 
 # =========================================================
-# TAB 1: Master Itinerary & Muhurat Timeline
+# TAB 1: Master Itinerary & Ceremony Timeline
 # =========================================================
 with tab_itinerary:
-    st.markdown("### 🪔 Auspicious Timeline & Ritual Architecture")
-    st.caption("Synchronizing Vedic rituals, guest hospitality, setup intervals, and dress aesthetics.")
+    rel_str = st.session_state.get("selected_religion", "Hinduism").lower()
+    if "christian" in rel_str:
+        st.markdown("### ✝️ Sacred Timeline & Liturgical Ceremony Architecture")
+        st.caption("Synchronizing church liturgy, pastoral blessings, processional cues, formal banquet, and celebration.")
+    elif "islam" in rel_str:
+        st.markdown("### ☪️ Mubarak Timeline & Sunnah Celebration Architecture")
+        st.caption("Synchronizing authentic Nikah solemnization, Halal culinary feasts, and Walima banquet hospitality.")
+    elif "juda" in rel_str:
+        st.markdown("### ✡️ Traditional Simcha Timeline & Ceremony Architecture")
+        st.caption("Synchronizing sacred Chuppah canopy rituals, Kosher culinary standards, and joyful Horah dancing.")
+    elif "sikh" in rel_str:
+        st.markdown("### ੴ Anand Karaj & Gurmat Celebration Architecture")
+        st.caption("Synchronizing Gurdwara Milni, 4 sacred Lavaan circumambulations, Langar seva, and grand reception.")
+    elif "buddh" in rel_str or "east asian" in rel_str:
+        st.markdown("### ☸️ Auspicious Blessings & Tea Ceremony Architecture")
+        st.caption("Synchronizing monastic blessings, ancestral tea homage, and multi-course celebratory banquets.")
+    elif "fusion" in rel_str or "contemporary" in rel_str:
+        st.markdown("### ✨ Modern Master Celebration & Ceremony Architecture")
+        st.caption("Synchronizing personal vows, cocktail hours, cross-cultural heritage, and high-energy celebrations.")
+    else:
+        st.markdown("### 🪔 Auspicious Timeline & Ritual Architecture")
+        st.caption("Synchronizing Vedic rituals, guest hospitality, setup intervals, and dress aesthetics.")
 
     itinerary_items = st.session_state.itinerary_data
 
@@ -949,7 +1009,8 @@ with tab_invitations:
         tradition=st.session_state.tradition,
         venue=st.session_state.venue_location,
         dates=dates_str,
-        rsvp_contact=st.session_state.rsvp_contact
+        rsvp_contact=st.session_state.rsvp_contact,
+        religion=st.session_state.selected_religion
     )
 
     tier_tabs = st.tabs(list(invitations.keys()))

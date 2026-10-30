@@ -27,7 +27,9 @@ from core.prompts import (
     BUDGET_SYSTEM_PROMPT,
     BUDGET_REBALANCE_PROMPT,
     CRISIS_DEPENDENCY_SYSTEM_PROMPT,
-    CRISIS_USER_TEMPLATE
+    CRISIS_USER_TEMPLATE,
+    build_timeline_system_prompt,
+    build_timeline_user_prompt
 )
 
 
@@ -95,20 +97,25 @@ class UtsavAIEngine:
         guest_count: int,
         dietary: str,
         venue_type: str,
-        user_notes: str = ""
+        user_notes: str = "",
+        religion: str = "Hinduism",
+        sub_tradition: str = ""
     ) -> Dict[str, Any]:
-        """Module 1: Generates an AI-powered day-by-day ritual timeline."""
+        """Module 1: Generates an AI-powered day-by-day ritual timeline strictly honoring the chosen religion."""
         if not self.is_configured():
             return {"source": "preset", "message": "Using calibrated cultural knowledge-base."}
 
-        user_prompt = TIMELINE_USER_TEMPLATE.format(
-            duration_days=days,
+        active_tradition = sub_tradition if sub_tradition else tradition
+        system_prompt = build_timeline_system_prompt(religion=religion, tradition=active_tradition)
+        user_prompt = build_timeline_user_prompt(
             event_type=event_type,
-            tradition=tradition,
+            religion=religion,
+            tradition=active_tradition,
             guest_count=guest_count,
+            duration_days=days,
             venue_type=venue_type,
             dietary=dietary,
-            user_notes=user_notes or "Adhere strictly to auspicious Vedic muhurat traditions."
+            user_notes=user_notes
         )
 
         try:
@@ -117,7 +124,7 @@ class UtsavAIEngine:
                     model='gemini-2.5-flash',
                     contents=user_prompt,
                     config=types.GenerateContentConfig(
-                        system_instruction=TIMELINE_SYSTEM_PROMPT,
+                        system_instruction=system_prompt,
                         temperature=0.3,
                         response_mime_type="application/json"
                     )
@@ -126,7 +133,7 @@ class UtsavAIEngine:
             elif GENAI_V1_AVAILABLE:
                 model = legacy_genai.GenerativeModel(
                     "gemini-1.5-flash",
-                    system_instruction=TIMELINE_SYSTEM_PROMPT
+                    system_instruction=system_prompt
                 )
                 response = model.generate_content(
                     user_prompt,
@@ -150,14 +157,15 @@ class UtsavAIEngine:
         tradition: str,
         venue_type: str,
         currency: str = "₹",
-        priorities: str = "Balanced Cultural Hospitality"
+        priorities: str = "Balanced Cultural Hospitality",
+        religion: str = "Hinduism"
     ) -> Dict[str, Any]:
         """Module 2: Generates structured budget breakdown with vendor line items."""
         if not self.is_configured():
             return {"source": "preset"}
 
         prompt = (
-            f"Allocate total budget of {currency}{total_budget:,.2f} for a {tradition} celebration with "
+            f"Allocate total budget of {currency}{total_budget:,.2f} for a {religion} ({tradition}) celebration with "
             f"{guest_count} guests at a {venue_type}. Primary focus: {priorities}. Output strict JSON matching the schema."
         )
 
@@ -200,7 +208,8 @@ class UtsavAIEngine:
         tradition: str,
         current_allocations: Dict[str, Any],
         user_instruction: str,
-        currency: str = "₹"
+        currency: str = "₹",
+        religion: str = "Hinduism"
     ) -> Dict[str, Any]:
         """Module 2 Chain: Rebalances budget categories based on natural language overrides."""
         if not self.is_configured():
@@ -215,7 +224,7 @@ class UtsavAIEngine:
             currency=currency,
             total_budget=total_budget,
             guest_count=guest_count,
-            tradition=tradition,
+            tradition=f"{religion} ({tradition})",
             current_allocations_json=json.dumps(alloc_summary),
             user_instruction=user_instruction
         )
@@ -258,7 +267,8 @@ class UtsavAIEngine:
         tradition: str,
         venue_type: str,
         guest_count: int,
-        season_context: str = "Peak Wedding Season / Outdoor Lawn Setup"
+        season_context: str = "Peak Wedding Season / Outdoor Lawn Setup",
+        religion: str = "Hinduism"
     ) -> Dict[str, Any]:
         """Module 3: Generates time-phased dependency matrix and crisis protocols."""
         if not self.is_configured():
@@ -266,7 +276,7 @@ class UtsavAIEngine:
 
         user_prompt = CRISIS_USER_TEMPLATE.format(
             event_type=event_type,
-            tradition=tradition,
+            tradition=f"{religion} ({tradition})",
             venue_type=venue_type,
             guest_count=guest_count,
             season_context=season_context

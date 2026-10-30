@@ -249,17 +249,19 @@ python -m pytest tests/test_engines.py -v
 ============================= test session starts =============================
 platform win32 -- Python 3.12.2, pytest-9.2.0, pluggy-1.7.0
 rootdir: D:\Projects\Utsav AI
-collected 7 items
+collected 9 items
 
-tests/test_engines.py::test_budget_initial_allocation PASSED             [ 14%]
-tests/test_engines.py::test_budget_rebalancing_proportional PASSED       [ 28%]
-tests/test_engines.py::test_task_matrix_phases PASSED                    [ 42%]
-tests/test_engines.py::test_crisis_protocols PASSED                      [ 57%]
-tests/test_engines.py::test_invitation_tiers PASSED                      [ 71%]
-tests/test_engines.py::test_vendor_engine_global_directory PASSED        [ 85%]
-tests/test_engines.py::test_global_religions PASSED                      [100%]
+tests/test_engines.py::test_budget_initial_allocation PASSED             [ 11%]
+tests/test_engines.py::test_budget_rebalancing_proportional PASSED       [ 22%]
+tests/test_engines.py::test_task_matrix_phases PASSED                    [ 33%]
+tests/test_engines.py::test_crisis_protocols PASSED                      [ 44%]
+tests/test_engines.py::test_invitation_tiers PASSED                      [ 55%]
+tests/test_engines.py::test_vendor_engine_global_directory PASSED        [ 66%]
+tests/test_engines.py::test_global_religions PASSED                      [ 77%]
+tests/test_engines.py::test_prompt_theological_isolation_christianity PASSED [ 88%]
+tests/test_engines.py::test_christian_invitations_and_checklists PASSED  [100%]
 
-======================== 7 passed in 14.76s ========================
+======================== 9 passed in 14.63s ========================
 ```
 
 ```bash

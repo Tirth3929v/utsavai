@@ -51,23 +51,16 @@ GLOBAL_RELIGIONS = {
                     {"day": 2, "time": "12:00 PM - 03:30 PM", "ritual": "Bou Bhaat & Reception", "significance": "Formal welcome feast where bride serves ghee-rice to family.", "dress_code": "Traditional Gorod Silk", "notes": "Royal Bengali cuisine with authentic mishti roshogollas."}
                 ],
                 "default_budget_split": {"Venue & Stays": 30, "Catering & Delicacies": 33, "Decor & Mandap Art": 15, "Photography & Film": 10, "Attire & Trousseau": 7, "Entertainment & Logistics": 3, "Buffer Reserve": 2}
-            }
-        }
-    },
-    "Islam": {
-        "icon": "☪️",
-        "calendar_system": "Hijri Lunar Calendar",
-        "auspicious_logic": "Post-Friday Prayers (Jummah), Shawwal & Non-Fasting Months",
-        "dietary_standard": "100% Halal Certified Catering, Strict Alcohol-Free Banquet",
-        "sub_traditions": {
-            "Traditional Nikah & Walima": {
+            },
+            "1-Day Vedic Vivaha & Reception": {
                 "rituals": [
-                    {"day": 1, "time": "04:00 PM - 07:00 PM", "ritual": "Manjha & Mayun (Turmeric Ceremony)", "significance": "Beautification and cleansing ceremony with sisters and aunts.", "dress_code": "Mustard Yellow Shararas & Kurtas", "notes": "Floral jewelry, marigold canopies, and traditional dholak."},
-                    {"day": 1, "time": "07:30 PM - 11:30 PM", "ritual": "Mehendi & Sangeet Gathering", "significance": "Intricate henna application with family musical performances.", "dress_code": "Emerald Green & Teal Anarkalis", "notes": "Multiple henna artists and live acoustic singers."},
-                    {"day": 2, "time": "11:00 AM - 01:30 PM", "ritual": "Nikah Ceremony & Ijab-e-Qubool", "significance": "Solemn marriage contract signing witnessed by Qazi and guardians.", "dress_code": "Regal Ivory Sherwani & Embroidered Pastel Gharara", "notes": "Segregated or unified seating per family customs, Mahr contract ready."},
-                    {"day": 2, "time": "08:00 PM - 12:30 AM", "ritual": "Grand Walima Reception", "significance": "Sunnah banquet hosted by groom's family to celebrate the union.", "dress_code": "Formal Black-Tie / Embroidered Royal Tuxedo & Lehenga", "notes": "Royal dum biryani, kebabs, sheer khurma, and stage photography."}
+                    {"day": 1, "time": "08:30 AM - 10:00 AM", "ritual": "Ganesh Puja & Mandap Sthapana", "significance": "Sanctifying the sacred pavilion and invoking divine obstacles removal.", "dress_code": "Festive Yellow / Traditional Silk Kurta", "notes": "Puja samagri, coconut, gangajal, and havan preparation."},
+                    {"day": 1, "time": "10:30 AM - 11:30 AM", "ritual": "Baraat Swagat & Varmala", "significance": "Welcoming groom and mutual exchange of fragrant rose garlands.", "dress_code": "Royal Sherwani & Regal Lehenga", "notes": "Entrance floral shower and brass band."},
+                    {"day": 1, "time": "11:45 AM - 01:45 PM", "ritual": "Kanyadaan, Mangal Pheras & Saptapadi", "significance": "Seven sacred vows around the holy havan fire and lifetime bonding.", "dress_code": "Bridal Red/Pink Panetar & Royal Turban", "notes": "Agni havan wood, ghee, puffed rice (laja)."},
+                    {"day": 1, "time": "02:00 PM - 03:30 PM", "ritual": "Traditional Wedding Feast (Mahaprasad)", "significance": "Elaborate multi-course pure vegetarian banquet for all guests.", "dress_code": "Festive Traditional", "notes": "Continuous buffet with sweets and live counters."},
+                    {"day": 1, "time": "07:30 PM - 11:30 PM", "ritual": "Grand Evening Reception & Musical Gala", "significance": "Formal congratulations, stage photography, live music, and celebrations.", "dress_code": "Indo-Western Tuxedo / Designer Gown", "notes": "Stage lighting, couple entrance song, photo booth."}
                 ],
-                "default_budget_split": {"Venue & Stays": 32, "Catering & Delicacies": 34, "Decor & Mandap Art": 14, "Photography & Film": 10, "Attire & Trousseau": 6, "Entertainment & Logistics": 2, "Buffer Reserve": 2}
+                "default_budget_split": {"Venue & Stays": 32, "Catering & Delicacies": 32, "Decor & Mandap Art": 15, "Photography & Film": 11, "Attire & Trousseau": 5, "Entertainment & Logistics": 3, "Buffer Reserve": 2}
             }
         }
     },
@@ -79,12 +72,68 @@ GLOBAL_RELIGIONS = {
         "sub_traditions": {
             "Traditional Church & Gala Reception": {
                 "rituals": [
-                    {"day": 1, "time": "05:00 PM - 07:00 PM", "ritual": "Rehearsal Walkthrough & Bridal Shower", "significance": "Bridal party rehearses processional order and altar placement.", "dress_code": "Cocktail Casual / Pastel Silks", "notes": "Coordinate sound system with church music director."},
-                    {"day": 1, "time": "07:30 PM - 10:30 PM", "ritual": "Welcome Rehearsal Dinner", "significance": "Intimate gathering thanking parents and wedding party entourage.", "dress_code": "Smart Casual Chic", "notes": "Microphone for heartfelt toasts and speeches."},
-                    {"day": 2, "time": "02:00 PM - 03:30 PM", "ritual": "Holy Matrimony (Vows & Rings)", "significance": "Exchange of vows and rings before God, accompanied by pipe organ hymns.", "dress_code": "White Lace Bridal Gown & Tuxedo / Morning Suit", "notes": "Order of service booklets and flower petals for church exit."},
-                    {"day": 2, "time": "06:30 PM - 01:00 AM", "ritual": "Grand Reception, First Dance & Banquet", "significance": "Formal grand entrance, first couple dance, wedding cake cutting, and feast.", "dress_code": "Black-Tie / Evening Gowns", "notes": "Live brass band or DJ, champagne toast towers, and photo booth."}
+                    {"day": 1, "time": "05:00 PM - 07:00 PM", "ritual": "Church Rehearsal Walkthrough", "significance": "Bridal party rehearses processional order, altar placement, and vows with the Pastor.", "dress_code": "Cocktail Casual / Smart Semi-Formal", "notes": "Coordinate sound system with church music director and organist."},
+                    {"day": 1, "time": "07:30 PM - 10:30 PM", "ritual": "Welcome Rehearsal Dinner & Toasts", "significance": "Intimate gathering thanking parents, bridal party, and out-of-town guests.", "dress_code": "Smart Casual Chic", "notes": "Wireless microphone for heartfelt family toasts and slide-shows."},
+                    {"day": 2, "time": "01:30 PM - 03:00 PM", "ritual": "Sacred Holy Matrimony (Processional, Vows & Rings)", "significance": "Exchange of vows and rings before God, accompanied by choir hymns and pastoral blessing.", "dress_code": "White Lace Bridal Gown & Tuxedo / Morning Suit", "notes": "Order of service booklets, pew bows, flower girl petals for exit."},
+                    {"day": 2, "time": "05:00 PM - 06:30 PM", "ritual": "Sunset Cocktail Hour & Hors d'Oeuvres", "significance": "Guests enjoy passed canapés, craft beverages, and lively acoustic melodies while couple takes formal portraits.", "dress_code": "Black-Tie / Formal Evening Wear", "notes": "String quartet or acoustic guitarist, passed champagne flutes."},
+                    {"day": 2, "time": "07:00 PM - 12:30 AM", "ritual": "Grand Reception, First Dance & Dinner Banquet", "significance": "Couple grand entrance, ceremonial cake cutting, emotional first dance, dinner banquet, and dancing.", "dress_code": "Black-Tie / Evening Gowns", "notes": "Live brass band or DJ, champagne toast towers, photo booth, and sparkler exit."}
                 ],
                 "default_budget_split": {"Venue & Stays": 35, "Catering & Delicacies": 30, "Decor & Mandap Art": 12, "Photography & Film": 12, "Attire & Trousseau": 6, "Entertainment & Logistics": 3, "Buffer Reserve": 2}
+            },
+            "1-Day Holy Matrimony & Gala Reception": {
+                "rituals": [
+                    {"day": 1, "time": "10:30 AM - 12:30 PM", "ritual": "Bridal & Groom Suite Preparation & Photography", "significance": "Couple prepares with bridal party; first look reveal with parents and emotional portrait session.", "dress_code": "Satin Preparation Robes / Casual Elegance", "notes": "Hair and makeup artists on site, floral deliveries confirmed."},
+                    {"day": 1, "time": "01:30 PM - 03:00 PM", "ritual": "Sacred Church Nuptial Service (Vows & Exchange of Rings)", "significance": "Solemn processional, biblical readings, pastoral vows, ring blessing, unity candle, and presentation of newlyweds.", "dress_code": "White Bridal Gown & Classic Dark Tuxedo", "notes": "Organist ready, wireless lapel mic for pastor, marriage certificate signing table."},
+                    {"day": 1, "time": "03:30 PM - 05:00 PM", "ritual": "Courtyard Mingle & Family Formal Portraits", "significance": "Post-ceremony congratulations and formal group photography with extended family and church members.", "dress_code": "Formal Church Attire", "notes": "Light refreshments, cold sparkling water, dedicated portrait backdrop."},
+                    {"day": 1, "time": "05:30 PM - 07:00 PM", "ritual": "Sunset Cocktail Hour & Passed Canapés", "significance": "Welcoming guests to the reception venue with signature mocktails, cocktails, and acoustic music.", "dress_code": "Black-Tie / Formal Evening Gowns", "notes": "Bar setup, passed canapés, guest book signing table."},
+                    {"day": 1, "time": "07:15 PM - 08:30 PM", "ritual": "Grand Entrance, Toasts & Multi-Course Dinner", "significance": "Grand couple entrance followed by heartfelt speeches by Best Man, Maid of Honor, and father of the bride, accompanied by formal dinner.", "dress_code": "Black-Tie / Tuxedo", "notes": "Audio system for speeches, plated or luxury buffet service."},
+                    {"day": 1, "time": "08:45 PM - 11:30 PM", "ritual": "Cake Cutting, First Dance & Joyful Dance Floor", "significance": "Ceremonial multi-tiered cake cutting, romantic first dance, father-daughter dance, and open celebration dancing.", "dress_code": "Formal Evening Wear", "notes": "Cake knife and champagne flutes, dynamic dance floor lighting, sparkler exit at 11:30 PM."}
+                ],
+                "default_budget_split": {"Venue & Stays": 36, "Catering & Delicacies": 30, "Decor & Mandap Art": 12, "Photography & Film": 12, "Attire & Trousseau": 5, "Entertainment & Logistics": 3, "Buffer Reserve": 2}
+            },
+            "Christian Engagement & Ring Ceremony": {
+                "rituals": [
+                    {"day": 1, "time": "11:00 AM - 12:30 PM", "ritual": "Pastoral Blessing & Ring Exchange Ceremony", "significance": "Opening prayer, pastoral reflection on commitment, exchange of engagement rings, and formal blessing by the minister.", "dress_code": "Smart Elegant / Pastel Cocktail Dresses & Suits", "notes": "Altar floral centerpiece, ring display cushion, order of service programs."},
+                    {"day": 1, "time": "01:00 PM - 03:00 PM", "ritual": "Celebratory Luncheon & Family Felicitations", "significance": "Intimate luncheon uniting both families with heartfelt blessings and welcome speeches.", "dress_code": "Smart Chic", "notes": "Three-course plated lunch or gourmet buffet with wine/mocktail pairing."},
+                    {"day": 1, "time": "06:30 PM - 08:00 PM", "ritual": "Sunset Welcome Cocktails & Mingling", "significance": "Evening cocktail reception welcoming extended friends and well-wishers.", "dress_code": "Cocktail Attire / Semi-Formal", "notes": "Passed canapés, signature his-and-hers mocktails/cocktails, ambient jazz music."},
+                    {"day": 1, "time": "08:00 PM - 11:30 PM", "ritual": "Engagement Gala, Toasts, Cake Cutting & Dancing", "significance": "Formal couple entrance, celebratory champagne toasts, engagement cake cutting, and open dance floor.", "dress_code": "Evening Cocktail Glamour", "notes": "Wireless mic for toasts, audio console, photographer on couple stage."}
+                ],
+                "default_budget_split": {"Venue & Stays": 35, "Catering & Delicacies": 32, "Decor & Mandap Art": 12, "Photography & Film": 11, "Attire & Trousseau": 5, "Entertainment & Logistics": 3, "Buffer Reserve": 2}
+            },
+            "Catholic Holy Matrimony & Nuptial Mass": {
+                "rituals": [
+                    {"day": 1, "time": "05:00 PM - 07:00 PM", "ritual": "Church Rehearsal & Confession Walkthrough", "significance": "Reviewing liturgical movements, altar reverences, and mass readings with the parish priest.", "dress_code": "Modest Semi-Formal", "notes": "Coordinate lectors for 1st and 2nd scripture readings with parish coordinator."},
+                    {"day": 1, "time": "07:30 PM - 10:00 PM", "ritual": "Rehearsal Welcome Dinner", "significance": "Pre-wedding dinner bringing both families together in gratitude and celebration.", "dress_code": "Smart Casual", "notes": "Private dining room reservation, toast speech microphone."},
+                    {"day": 2, "time": "01:30 PM - 03:15 PM", "ritual": "Solemn Nuptial Mass & Liturgy of the Eucharist", "significance": "Full Catholic Mass with scripture readings, solemn consent, exchange of rings, arras/lazo (if traditional), and Holy Communion.", "dress_code": "Cathedral Length White Gown with Veil & Dark Tuxedo", "notes": "Pew missalettes, choir organist, kneeler cushions for bride and groom."},
+                    {"day": 2, "time": "06:00 PM - 12:30 AM", "ritual": "Grand Ballroom Reception & Gala Dinner", "significance": "Grand bridal party entrance, formal banquet, wedding cake cutting, first dance, and celebration.", "dress_code": "Black-Tie / Ballgowns", "notes": "Live 7-piece wedding orchestra or DJ, champagne toast service."}
+                ],
+                "default_budget_split": {"Venue & Stays": 35, "Catering & Delicacies": 30, "Decor & Mandap Art": 12, "Photography & Film": 12, "Attire & Trousseau": 6, "Entertainment & Logistics": 3, "Buffer Reserve": 2}
+            }
+        }
+    },
+    "Islam": {
+        "icon": "☪️",
+        "calendar_system": "Hijri Lunar Calendar",
+        "auspicious_logic": "Post-Friday Prayers (Jummah), Shawwal & Non-Fasting Months",
+        "dietary_standard": "100% Halal Certified Catering, Strict Alcohol-Free Banquet",
+        "sub_traditions": {
+            "Traditional Nikah & Walima": {
+                "rituals": [
+                    {"day": 1, "time": "04:00 PM - 07:00 PM", "ritual": "Manjha & Mayun (Turmeric Ceremony)", "significance": "Beautification and cleansing ceremony with female relatives and cousins.", "dress_code": "Mustard Yellow Shararas & Kurtas", "notes": "Floral jewelry, marigold canopies, and traditional dholak."},
+                    {"day": 1, "time": "07:30 PM - 11:30 PM", "ritual": "Festive Mehndi & Henna Gathering", "significance": "Intricate henna application with family musical performances and folk songs.", "dress_code": "Emerald Green & Teal Anarkalis", "notes": "Multiple henna artists and live acoustic singers."},
+                    {"day": 2, "time": "11:00 AM - 01:30 PM", "ritual": "Nikah Ceremony & Ijab-e-Qubool", "significance": "Solemn marriage contract signing witnessed by Qazi and guardians with collective Dua.", "dress_code": "Regal Ivory Sherwani & Embroidered Pastel Gharara", "notes": "Mahr contract ready, sweet dates and rosewater for guests."},
+                    {"day": 2, "time": "08:00 PM - 12:30 AM", "ritual": "Grand Walima Reception", "significance": "Sunnah banquet hosted by groom's family to celebrate the union.", "dress_code": "Formal Black-Tie / Embroidered Royal Tuxedo & Lehenga", "notes": "Royal dum biryani, kebabs, sheer khurma, and stage photography."}
+                ],
+                "default_budget_split": {"Venue & Stays": 32, "Catering & Delicacies": 34, "Decor & Mandap Art": 14, "Photography & Film": 10, "Attire & Trousseau": 6, "Entertainment & Logistics": 2, "Buffer Reserve": 2}
+            },
+            "1-Day Nikah Solemnization & Walima Feast": {
+                "rituals": [
+                    {"day": 1, "time": "10:30 AM - 11:45 AM", "ritual": "Baraat Swagat & Arrival", "significance": "Groom entourage arrives with rosewater spray and warm family greetings.", "dress_code": "Classic Embroidered Sherwani with Turban", "notes": "Welcome stage and fragrant jasmine garlands."},
+                    {"day": 1, "time": "12:00 PM - 01:30 PM", "ritual": "Nikah Ceremony (Khutbah, Ijab-e-Qubool & Dua)", "significance": "Recitation of Quranic marriage khutbah, offer and acceptance in front of witnesses, and signing Nikah-nama.", "dress_code": "Traditional Royal Attire", "notes": "Qazi mic setup, marriage certificate pens, dates distribution."},
+                    {"day": 1, "time": "01:45 PM - 03:30 PM", "ritual": "Grand Nikah Dawat (Royal Halal Feast)", "significance": "Lavish celebratory lunch featuring authentic biryani, kebabs, and traditional desserts.", "dress_code": "Festive Modest Wear", "notes": "Full halal certification, separate or family seating arranged."},
+                    {"day": 1, "time": "07:30 PM - 11:30 PM", "ritual": "Grand Walima Reception & Stage Felicitations", "significance": "Formal celebratory banquet honoring the newlyweds with family photography and felicitations.", "dress_code": "Evening Royal Couture", "notes": "Bridal stage photography, live instrumental sufi music."}
+                ],
+                "default_budget_split": {"Venue & Stays": 33, "Catering & Delicacies": 35, "Decor & Mandap Art": 13, "Photography & Film": 10, "Attire & Trousseau": 5, "Entertainment & Logistics": 2, "Buffer Reserve": 2}
             }
         }
     },
@@ -103,6 +152,15 @@ GLOBAL_RELIGIONS = {
                     {"day": 2, "time": "12:30 PM - 02:30 PM", "ritual": "Guru Ka Langar", "significance": "Egalitarian community feast served on floor mats with divine reverence.", "dress_code": "Modest traditional attire", "notes": "Volunteer seva brigade for serving hot roti and daal."}
                 ],
                 "default_budget_split": {"Venue & Stays": 30, "Catering & Delicacies": 34, "Decor & Mandap Art": 14, "Photography & Film": 10, "Attire & Trousseau": 6, "Entertainment & Logistics": 4, "Buffer Reserve": 2}
+            },
+            "1-Day Gurdwara Anand Karaj & Langar Seva": {
+                "rituals": [
+                    {"day": 1, "time": "08:30 AM - 09:30 AM", "ritual": "Milni Swagat at Gurdwara", "significance": "Greeting and flower garland exchange between corresponding elders.", "dress_code": "Modest Formal with Head Coverings", "notes": "Head scarves provided at entrance, shoe room managed."},
+                    {"day": 1, "time": "09:45 AM - 11:30 AM", "ritual": "Sacred Anand Karaj (4 Lavaan Around Sri Guru Granth Sahib Ji)", "significance": "Holy marriage hymn recitation and circumambulation led by Granthi Sahib.", "dress_code": "Traditional Regal Punjabi Attire", "notes": "Karah Parshad prepared, Ragi Jatha acoustic harmonium."},
+                    {"day": 1, "time": "11:45 AM - 01:30 PM", "ritual": "Guru Ka Langar Seva & Community Feast", "significance": "Sacred community vegetarian meal served on floor mats in the Langar Hall.", "dress_code": "Modest Attire", "notes": "Seva team organized, hot dal and prashad distribution."},
+                    {"day": 1, "time": "07:00 PM - 11:30 PM", "ritual": "Grand Evening Reception & Bhangra Celebration", "significance": "Formal gala, stage felicitations, lavish dinner buffet, and dance floor.", "dress_code": "Black-Tie / Haute Couture Lehengas", "notes": "Live dhol drummers, DJ setup, couple grand entrance."}
+                ],
+                "default_budget_split": {"Venue & Stays": 31, "Catering & Delicacies": 33, "Decor & Mandap Art": 14, "Photography & Film": 11, "Attire & Trousseau": 5, "Entertainment & Logistics": 4, "Buffer Reserve": 2}
             }
         }
     },
@@ -119,6 +177,16 @@ GLOBAL_RELIGIONS = {
                     {"day": 1, "time": "08:00 PM - 01:00 AM", "ritual": "The Horah Dance & Kosher Gala Dinner", "significance": "High-energy circle dancing lifting the bride and groom high on chairs.", "dress_code": "Black-Tie Elegant", "notes": "Sturdy wooden armchairs for chair-lifting, live klezmer band."}
                 ],
                 "default_budget_split": {"Venue & Stays": 34, "Catering & Delicacies": 32, "Decor & Mandap Art": 14, "Photography & Film": 10, "Attire & Trousseau": 5, "Entertainment & Logistics": 3, "Buffer Reserve": 2}
+            },
+            "1-Day Chuppah, Ketubah & Kosher Simcha Gala": {
+                "rituals": [
+                    {"day": 1, "time": "03:00 PM - 04:15 PM", "ritual": "Kabbalat Panim, Chosson's Tish & Ketubah Signing", "significance": "Separate greeting receptions, singing at groom's table, and formal signing of the Ketubah with two witnesses.", "dress_code": "Formal Attire with Kippah", "notes": "Ketubah table, kosher wine cups, observant witnesses present."},
+                    {"day": 1, "time": "04:30 PM - 05:15 PM", "ritual": "Badeken (Veiling of the Bride)", "significance": "Groom veils the bride accompanied by joyful singing and parental blessings.", "dress_code": "Bridal Gown & Formal Suit", "notes": "Bridal throne chair, photographer ready for emotional reveal."},
+                    {"day": 1, "time": "05:30 PM - 06:45 PM", "ritual": "Chuppah Ceremony & Glass Breaking", "significance": "Processional, Hakafot, Kiddushin, Sheva Brachot, and groom breaking the glass with joyful 'Mazel Tov!' shouts.", "dress_code": "Black-Tie / Formal Modest Wear", "notes": "Chuppah floral canopy, sound system for rabbi, linen-wrapped glass."},
+                    {"day": 1, "time": "07:00 PM - 08:00 PM", "ritual": "Yichud & Sunset Cocktail Hour", "significance": "Couple shares intimate secluded moments while guests enjoy passed kosher hors d'oeuvres.", "dress_code": "Formal Evening Wear", "notes": "Private room with light refreshments for couple; cocktail bar open for guests."},
+                    {"day": 1, "time": "08:15 PM - 12:30 AM", "ritual": "The Horah Circle Dance, Kosher Feast & Celebration", "significance": "Lifting bride and groom on chairs, Hamotzi blessing, multi-course glatt kosher banquet, and dancing.", "dress_code": "Black-Tie Gala", "notes": "Live Klezmer/simcha band, certified kosher catering team, Birkat Hamazon booklets."}
+                ],
+                "default_budget_split": {"Venue & Stays": 35, "Catering & Delicacies": 32, "Decor & Mandap Art": 13, "Photography & Film": 11, "Attire & Trousseau": 4, "Entertainment & Logistics": 3, "Buffer Reserve": 2}
             }
         }
     },
@@ -135,6 +203,15 @@ GLOBAL_RELIGIONS = {
                     {"day": 1, "time": "07:00 PM - 10:30 PM", "ritual": "Multi-Course Celebration Banquet", "significance": "Festive community banquet celebrating harmony and lineage.", "dress_code": "Formal Festive", "notes": "Round table banquet service and toast speeches."}
                 ],
                 "default_budget_split": {"Venue & Stays": 32, "Catering & Delicacies": 34, "Decor & Mandap Art": 14, "Photography & Film": 10, "Attire & Trousseau": 5, "Entertainment & Logistics": 3, "Buffer Reserve": 2}
+            },
+            "1-Day Tea Ceremony & Multi-Course Celebration Banquet": {
+                "rituals": [
+                    {"day": 1, "time": "09:00 AM - 10:15 AM", "ritual": "Door Games (Chuangmen) & Bridal Fetching", "significance": "Groom and groomsmen pass playful tests by bridesmaids to prove devotion.", "dress_code": "Traditional Silk Attire", "notes": "Red packets (Hongbao) prepared, creative props ready."},
+                    {"day": 1, "time": "10:30 AM - 12:30 PM", "ritual": "Sacred Ancestral Homage & Tea Ceremony", "significance": "Couple kneels and offers sweet lotus tea to parents and elders in exchange for blessings and gold heirlooms.", "dress_code": "Traditional Embroidered Cheongsam / Hanbok", "notes": "Porcelain tea cups, sweet tea brewed with longan and red dates, kneeling cushions."},
+                    {"day": 1, "time": "01:00 PM - 03:00 PM", "ritual": "Family Celebration Luncheon", "significance": "Auspicious meal bringing both clans together in fellowship.", "dress_code": "Festive Semi-Formal", "notes": "Family banquet tables with traditional dishes."},
+                    {"day": 1, "time": "07:00 PM - 11:00 PM", "ritual": "Grand 8-Course Wedding Banquet & Yam Seng Toasts", "significance": "Symbolic 8-course banquet representing prosperity, joyous Yam Seng toasts, and stage speeches.", "dress_code": "Formal Evening Wear / Tuxedo & Gown", "notes": "Round tables of 10, stage backdrop with Double Happiness symbol, audiovisual projector."}
+                ],
+                "default_budget_split": {"Venue & Stays": 34, "Catering & Delicacies": 34, "Decor & Mandap Art": 13, "Photography & Film": 10, "Attire & Trousseau": 4, "Entertainment & Logistics": 3, "Buffer Reserve": 2}
             }
         }
     },
@@ -148,13 +225,21 @@ GLOBAL_RELIGIONS = {
                 "rituals": [
                     {"day": 1, "time": "04:30 PM - 07:00 PM", "ritual": "Sunset Welcome Cocktails & Sundowner", "significance": "Ice-breaker gathering for global travelers with acoustic melodies.", "dress_code": "Resort Chic / Pastel Linen", "notes": "Signature mocktails/cocktails and live saxophone artist."},
                     {"day": 1, "time": "08:00 PM - 01:00 AM", "ritual": "Global Sangeet & Musical Showcase", "significance": "Choreographed cross-cultural performances and dance battles.", "dress_code": "Contemporary Fusion / Metallic Glamour", "notes": "LED backdrop wall and dance-floor lighting."},
-                    {"day": 2, "time": "10:30 AM - 01:00 PM", "ritual": "Poolside Floral Fiesta (Haldi / Flower Shower)", "significance": "Organic floral holi, live food carts, and sunshine celebrations.", "dress_code": "Boho Chic / Yellows & Pastels", "notes": "Marigold petals, water spritzers, and photo stations."},
-                    {"day": 2, "time": "05:30 PM - 07:30 PM", "ritual": "Sunset Vows & Floral Mandap Exchange", "significance": "Harmonious union blending ancestral traditions with modern personal vows.", "dress_code": "Ivory / Champagne Rose Gold", "notes": "Golden hour lighting coordinates with camera drones."},
+                    {"day": 2, "time": "10:30 AM - 01:00 PM", "ritual": "Poolside Floral Fiesta", "significance": "Organic floral shower, live food carts, and sunshine celebrations.", "dress_code": "Boho Chic / Yellows & Pastels", "notes": "Marigold petals, water spritzers, and photo stations."},
+                    {"day": 2, "time": "05:30 PM - 07:30 PM", "ritual": "Sunset Vows & Cultural Exchange", "significance": "Harmonious union blending ancestral traditions with modern personal vows.", "dress_code": "Ivory / Champagne Rose Gold", "notes": "Golden hour lighting coordinates with camera drones."},
                     {"day": 2, "time": "08:30 PM - 01:30 AM", "ritual": "Gala Dinner & International After-Party", "significance": "Formal speeches, cake cutting, multi-cuisine banquet, and dancing.", "dress_code": "Black-Tie / Tuxedo / Ballgown", "notes": "Midnight dessert bar and coffee lounge."}
                 ],
                 "default_budget_split": {"Venue & Stays": 35, "Catering & Delicacies": 28, "Decor & Mandap Art": 15, "Photography & Film": 12, "Attire & Trousseau": 5, "Entertainment & Logistics": 3, "Buffer Reserve": 2}
+            },
+            "1-Day Modern Fusion Vows & Gala Reception": {
+                "rituals": [
+                    {"day": 1, "time": "02:00 PM - 03:30 PM", "ritual": "Dual-Heritage Exchange of Vows & Ring Ceremony", "significance": "Personalized secular or interfaith vows uniting two backgrounds under an open floral canopy.", "dress_code": "Elegant Cocktail / Modern Attire", "notes": "Bilingual or dual-tradition program cards, wireless microphones."},
+                    {"day": 1, "time": "04:00 PM - 05:30 PM", "ritual": "Cultural Heritage Showcase & Mingle", "significance": "Guests enjoy passed delicacies honoring both families' heritage cultures.", "dress_code": "Cocktail Chic", "notes": "Live acoustic fusion band, interactive guestbook."},
+                    {"day": 1, "time": "06:00 PM - 07:30 PM", "ritual": "Sunset Cocktail Hour & Canapés", "significance": "Golden hour drinks, hors d'oeuvres, and couple photography session.", "dress_code": "Black-Tie Optional", "notes": "Passed cocktails, mocktail spritzers, ambient lounge jazz."},
+                    {"day": 1, "time": "07:45 PM - 11:30 PM", "ritual": "Dinner Banquet, Speeches, Cake Cutting & Dancing", "significance": "Couple grand entrance, speeches by loved ones, custom multi-cuisine dinner, cake cutting, and high-energy dance party.", "dress_code": "Evening Formal", "notes": "Dynamic dance floor lighting, custom dessert table, late-night snacks."}
+                ],
+                "default_budget_split": {"Venue & Stays": 35, "Catering & Delicacies": 30, "Decor & Mandap Art": 14, "Photography & Film": 11, "Attire & Trousseau": 5, "Entertainment & Logistics": 3, "Buffer Reserve": 2}
             }
         }
     }
 }
-

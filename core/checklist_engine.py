@@ -231,44 +231,74 @@ class ChecklistEngine:
         ]
 
     @classmethod
-    def get_default_checklists(cls, tradition: str = "Gujarati Hindu", event_type: str = "Grand Wedding (Multi-Day)") -> Dict[str, Any]:
-        """Consolidates all statutory, vendor SLA, pooja samagri, and contingency modules."""
-        return {
-            "Time-Phased Task Matrix": cls.get_time_phased_task_matrix(tradition, event_type),
-            "Crisis & Risk Mitigation Protocols": cls.get_crisis_protocols(),
-            "Vendor Critical Questionnaires & SLAs": [
-                {
-                    "vendor_type": "Caterer & Beverage Partner",
-                    "questions": [
-                        "Can you guarantee dedicated Jain/Satvik live counters with zero onion-garlic cross-contamination?",
-                        "What is your food wastage protocol, and can surplus be channeled to local verified food banks?",
-                        "What is the staff-to-guest ratio for live table service (recommended 1 server per 15 guests)?",
-                        "Are backup gas cylinders and mobile kitchen induction units available on-site?"
-                    ],
-                    "sla_tip": "Include penalty clause of 5% deduction for food delays exceeding 30 minutes beyond scheduled muhurat."
-                },
-                {
-                    "vendor_type": "Decor & Floral Architect",
-                    "questions": [
-                        "What is the strike-time and setup handover window before the first ritual begins?",
-                        "In case of unseasonal rain/wind, what is the storm backup plan for open-air mandaps?",
-                        "Are real fresh tuberoses/marigolds guaranteed instead of artificial plastic sprays?",
-                        "Is generator power backup (silent DG set) included in your quote?"
-                    ],
-                    "sla_tip": "Mandate photo sign-off of the sample floral centerpiece 48 hours prior to delivery."
-                },
-                {
-                    "vendor_type": "Photography & Cinematography Crew",
-                    "questions": [
-                        "How many candid shooters vs traditional videographers will be deployed per ritual?",
-                        "What is the turnaround time for the same-day teaser reel (ideal: 24 hours)?",
-                        "Will you bring backup dual-slot camera bodies and external audio recorders for priest chants?",
-                        "Do you hold all raw footage backup on cloud storage for minimum 90 days?"
-                    ],
-                    "sla_tip": "Tie final 20% payment to delivery of the master album and high-res raw drive."
-                }
-            ],
-            "Auspicious Pooja & Sacred Samagri Kit": [
+    def get_default_checklists(cls, tradition: str = "Gujarati Hindu", event_type: str = "Grand Wedding (Multi-Day)", religion: str = "Hinduism") -> Dict[str, Any]:
+        """Consolidates all statutory, vendor SLA, ceremony essentials kit, and contingency modules."""
+        rel_lower = (religion or "Hinduism").lower()
+
+        # Faith-specific ceremony kit
+        if "christian" in rel_lower:
+            kit_title = "Sacred Church Liturgy & Ceremony Preparation Kit"
+            kit_items = [
+                {"item": "Order of Service booklets printed & placed in church pews", "category": "Liturgy", "status": False},
+                {"item": "Marriage License & Certificate paperwork from civil registrar", "category": "Legal", "status": False},
+                {"item": "Polished wedding rings in ceremonial cushion / ring box", "category": "Rings", "status": False},
+                {"item": "Unity Candle and taper lighters for church altar", "category": "Altar", "status": False},
+                {"item": "Fresh rose petal cones / confetti for church exit walk", "category": "Send-off", "status": False},
+                {"item": "Clergy honorarium and organist gratuity envelopes", "category": "Honorarium", "status": False}
+            ]
+        elif "islam" in rel_lower:
+            kit_title = "Sacred Nikah & Walima Preparation Kit"
+            kit_items = [
+                {"item": "Official Nikah-Nama contract folders & calligraphy signing pens", "category": "Nikah Legal", "status": False},
+                {"item": "Mahr marital gift documentation & designated presentation box", "category": "Mahr", "status": False},
+                {"item": "Premium Ajwa dates and celebratory mithai for post-Nikah distribution", "category": "Sunnah", "status": False},
+                {"item": "Fragrant rosewater brass sprinklers and fresh jasmine garlands", "category": "Swagat", "status": False},
+                {"item": "100% Halal catering verification certificate signed by head chef", "category": "Catering", "status": False},
+                {"item": "Qazi / Imam honorarium and Dua token envelopes", "category": "Clergy", "status": False}
+            ]
+        elif "juda" in rel_lower:
+            kit_title = "Sacred Chuppah & Ketubah Kit"
+            kit_items = [
+                {"item": "Illustrated Ketubah contract and archival ink quill pen", "category": "Legal", "status": False},
+                {"item": "Two silver Kosher wine cups and certified kosher wine", "category": "Kiddushin", "status": False},
+                {"item": "Plain, unadorned gold wedding band", "category": "Rings", "status": False},
+                {"item": "Linen napkin-wrapped glass for groom stomping", "category": "Chuppah", "status": False},
+                {"item": "Kippot / Yarmulkes basket for guests at Chuppah entrance", "category": "Sanctum", "status": False},
+                {"item": "Rabbi and Cantor honorarium envelopes", "category": "Clergy", "status": False}
+            ]
+        elif "sikh" in rel_lower:
+            kit_title = "Sacred Anand Karaj & Gurdwara Kit"
+            kit_items = [
+                {"item": "Embroidered Rumalla Sahib offering for Sri Guru Granth Sahib Ji", "category": "Darbar", "status": False},
+                {"item": "Fresh floral Jaimala garlands for Gurdwara Milni greeting", "category": "Milni", "status": False},
+                {"item": "Sacred Palla cloth for groom and bride knot ceremony", "category": "Laavan", "status": False},
+                {"item": "Karah Parshad ingredients verified with Gurdwara kitchen team", "category": "Parshad", "status": False},
+                {"item": "Head coverings (Rumals/Dupattas) for all attending guests", "category": "Sanctum", "status": False},
+                {"item": "Granthi Sahib and Ragi Jatha seva honorarium envelopes", "category": "Seva", "status": False}
+            ]
+        elif "buddh" in rel_lower or "east asian" in rel_lower:
+            kit_title = "Sacred Tea Ceremony & Ancestral Homage Kit"
+            kit_items = [
+                {"item": "Traditional porcelain tea set with Double Happiness motif", "category": "Tea Ceremony", "status": False},
+                {"item": "Sweet tea brewed with longan, red dates, and lotus seeds", "category": "Tea Brew", "status": False},
+                {"item": "Comfortable kneeling cushions for bride and groom", "category": "Homage", "status": False},
+                {"item": "Red envelopes (Hongbao) with crisp new currency notes", "category": "Tradition", "status": False},
+                {"item": "Fresh lotus blooms and monastic alms offerings", "category": "Blessing", "status": False},
+                {"item": "Door games props and challenge envelopes for bridal party", "category": "Celebration", "status": False}
+            ]
+        elif "fusion" in rel_lower or "contemporary" in rel_lower:
+            kit_title = "Modern Ceremony & Celebration Essentials Kit"
+            kit_items = [
+                {"item": "Printed personalized vow booklets in keepsake leather covers", "category": "Vows", "status": False},
+                {"item": "Wedding rings in velvet display box", "category": "Rings", "status": False},
+                {"item": "Marriage certificate registry and sign-off pens", "category": "Legal", "status": False},
+                {"item": "Wireless lapel microphones for celebrant and couple", "category": "Audio", "status": False},
+                {"item": "Biodegradable petal confetti / sparklers for grand exit", "category": "Send-off", "status": False},
+                {"item": "Celebrant honorarium and vendor coordinator envelopes", "category": "Gratuity", "status": False}
+            ]
+        else:
+            kit_title = "Auspicious Pooja & Sacred Samagri Kit"
+            kit_items = [
                 {"item": "Ganesh Murti / Supari & Kalash with Mango Leaves", "category": "Sanctum", "status": False},
                 {"item": "Pure Gangajal, Rose Water & Panchamrut (Milk, Curd, Ghee, Honey, Sugar)", "category": "Purification", "status": False},
                 {"item": "Dry Havan Samagri, Camphor (Kapur), Sandalwood Sticks & Cow Dung Cakes", "category": "Havan", "status": False},
@@ -276,4 +306,41 @@ class ChecklistEngine:
                 {"item": "Fresh Garlands (Jaimala) kept in cool temperature with moisture wrap", "category": "Jaimala", "status": False},
                 {"item": "Dakshina Envelopes (Shagun Lifafas) with pristine currency notes", "category": "Tradition", "status": False}
             ]
+
+        return {
+            "Time-Phased Task Matrix": cls.get_time_phased_task_matrix(tradition, event_type),
+            "Crisis & Risk Mitigation Protocols": cls.get_crisis_protocols(),
+            "Vendor Critical Questionnaires & SLAs": [
+                {
+                    "vendor_type": "Caterer & Beverage Partner",
+                    "questions": [
+                        "Can you guarantee dietary compliance (e.g., Satvik, Halal, Kosher, or Gluten-Free counters)?",
+                        "What is your food wastage protocol, and can surplus be channeled to local verified food banks?",
+                        "What is the staff-to-guest ratio for live table service (recommended 1 server per 15 guests)?",
+                        "Are backup cooking gas cylinders and mobile kitchen induction units available on-site?"
+                    ],
+                    "sla_tip": "Include penalty clause of 5% deduction for food delays exceeding 30 minutes beyond scheduled ceremony."
+                },
+                {
+                    "vendor_type": "Decor & Floral Architect",
+                    "questions": [
+                        "What is the strike-time and setup handover window before the first ritual begins?",
+                        "In case of unseasonal rain/wind, what is the storm backup plan for open-air installations?",
+                        "Are real fresh blooms guaranteed instead of artificial plastic sprays?",
+                        "Is generator power backup (silent DG set) included in your quote?"
+                    ],
+                    "sla_tip": "Mandate photo sign-off of the sample floral centerpiece 48 hours prior to delivery."
+                },
+                {
+                    "vendor_type": "Photography & Cinematography Crew",
+                    "questions": [
+                        "How many candid shooters vs traditional videographers will be deployed per ceremony?",
+                        "What is the turnaround time for the same-day teaser reel (ideal: 24 hours)?",
+                        "Will you bring backup dual-slot camera bodies and external audio recorders for ceremony vows?",
+                        "Do you hold all raw footage backup on cloud storage for minimum 90 days?"
+                    ],
+                    "sla_tip": "Tie final 20% payment to delivery of the master album and high-res raw drive."
+                }
+            ],
+            kit_title: kit_items
         }

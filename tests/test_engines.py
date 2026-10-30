@@ -11,6 +11,7 @@ from core.checklist_engine import ChecklistEngine
 from core.itinerary_engine import ItineraryEngine
 from core.invitation_engine import InvitationEngine
 from core.vendor_engine import VendorEngine
+from core.prompts import build_timeline_system_prompt, build_timeline_user_prompt
 from config.traditions import CULTURAL_TRADITIONS
 from config.global_traditions import GLOBAL_RELIGIONS
 
@@ -95,6 +96,51 @@ def test_global_religions():
         assert "calendar_system" in rel_data
         assert "dietary_standard" in rel_data
         assert "sub_traditions" in rel_data and len(rel_data["sub_traditions"]) > 0
+
+def test_prompt_theological_isolation_christianity():
+    prompt = build_timeline_system_prompt("Christianity", "Traditional Church & Gala Reception")
+    assert "Christianity" in prompt
+    assert "Nuptial" in prompt or "Processional" in prompt
+    # Strict exclusion check in theological guidelines
+    assert "Ganesh" in prompt and "STRICTLY NO" in prompt
+    
+    user_p = build_timeline_user_prompt(
+        event_type="Engagement & Ring Ceremony",
+        religion="Christianity",
+        tradition="Christian Engagement & Ring Ceremony",
+        guest_count=200,
+        duration_days=1,
+        venue_type="Luxury Resort",
+        dietary="Continental Buffet",
+        user_notes=""
+    )
+    assert "Christianity" in user_p
+    assert "No mixed religious rituals" in user_p.lower() or "authenticity" in user_p.lower()
+
+def test_christian_invitations_and_checklists():
+    invites = InvitationEngine.generate_invitations(
+        event_name="Holy Matrimony & Gala Reception",
+        hosts="The Johnsons",
+        honorees="David & Sarah",
+        tradition="Traditional Church & Gala Reception",
+        venue="St. Mary's Cathedral & The Grand Ballroom",
+        dates="December 12, 2026",
+        rsvp_contact="rsvp@johnsonwedding.com",
+        religion="Christianity"
+    )
+    elder_copy = invites["Tier 1: Elders & Sacred Family Circle"]["card_copy"]
+    assert "Father, and of the Son" in elder_copy
+    assert "1 Corinthians" in elder_copy
+    assert "ગણેશાય" not in elder_copy
+    assert "Pheras" not in elder_copy
+
+    checklists = ChecklistEngine.get_default_checklists(
+        tradition="Traditional Church & Gala Reception",
+        event_type="Grand Wedding",
+        religion="Christianity"
+    )
+    assert "Sacred Church Liturgy & Ceremony Preparation Kit" in checklists
+    assert "Auspicious Pooja & Sacred Samagri Kit" not in checklists
 
 if __name__ == "__main__":
     test_budget_initial_allocation()
