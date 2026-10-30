@@ -113,6 +113,21 @@ Multi-day cultural celebrations (such as 3-day Gujarati, Punjabi, South Indian, 
 
 ---
 
+### 5️⃣ Global Vendor & Venue Directory Hub (Zero-Token Direct Owner Connect)
+*Discover verified venues, banquet halls, executive caterers, event directors, and cinematographers tailored to any selected country, state, and city with real-time direct connections and occasion spend transparency.*
+
+<div align="center">
+  <img src="assets/screenshot_tab5_directory.png" width="90%" alt="Global Vendor and Venue Directory Hub" style="border-radius: 10px; border: 1px solid #282C40;" />
+</div>
+
+* **Direct Owner & Decision Maker Contact:** Connect directly with owners, general managers, and culinary directors via 1-click **Call Direct (`tel:`)** and **WhatsApp Chat (`https://wa.me/`)** without middleman commissions.
+* **Real-Time Spatial Navigation:** Dynamic **Google Maps Live Direction** queries pinpoint exact coordinates and parking capacities.
+* **Occasion Spend Transparency:** Clear estimated spend brackets per occasion with minimum spend commitments and capacity thresholds.
+* **Zero-Token Retrieval Architecture:** Built on high-performance indexed spatial templates that cost **0 AI tokens**, preventing rate limits and LLM hallucinations.
+* **Global Scale & Universal Faith Support:** Covers major world religions (Hinduism, Islam, Christianity, Sikhism, Judaism, Buddhism/East Asian, Interfaith) across countries worldwide (India, United States, United Kingdom, UAE, Poland, Canada, Australia, France, Germany, and more).
+
+---
+
 ## 🏗️ System Architecture & Data Flow
 
 ```mermaid
@@ -124,24 +139,25 @@ flowchart TD
     classDef uiStyle fill:#131728,stroke:#10B981,stroke-width:2px,color:#FFF;
 
     subgraph HostInput["1. Architectural Inputs (Sidebar)"]
-        A[Event Type & Tradition]:::inputStyle
-        B[Guest Count & Scale]:::inputStyle
-        C[Total Capital Budget]:::inputStyle
-        D[Venue Style & Dates]:::inputStyle
+        A[World Religion & Tradition]:::inputStyle
+        B[Global Location: Country, State, City]:::inputStyle
+        C[Guest Scale & Total Capital Budget]:::inputStyle
+        D[Venue Style & Event Dates]:::inputStyle
     end
 
     subgraph Orchestration["2. Prompt Engineering & AI Layer"]
         E[UtsavAIEngine Controller]:::aiStyle
-        F[Vedic Muhurat Generator Prompt<br/><i>Temp: 0.3 + JSON Schema</i>]:::aiStyle
+        F[Vedic & Global Muhurat Prompt<br/><i>Temp: 0.3 + JSON Schema</i>]:::aiStyle
         G[Google Gemini 2.5 Flash]:::aiStyle
-        H[Two-Tier Resilient Fallback<br/><i>Cultural Knowledge-Base</i>]:::aiStyle
+        H[Two-Tier Resilient Fallback<br/><i>Zero-Token Cultural Knowledge-Base</i>]:::aiStyle
     end
 
-    subgraph DeterministicEngines["3. Mathematical & State Engines"]
+    subgraph DeterministicEngines["3. Mathematical & Zero-Token Spatial Engines"]
         I[BudgetEngine: Proportional Rebalancer]:::mathStyle
         J[ItineraryEngine: Schedule & MD Export]:::mathStyle
         K[ChecklistEngine: Permits & Crisis Protocols]:::mathStyle
         L[InvitationEngine: Multi-Tier Generator]:::mathStyle
+        M_Vendor[VendorEngine: Zero-Token Global Directory]:::mathStyle
     end
 
     subgraph DashboardUI["4. Streamlit Interactive Dashboard"]
@@ -150,6 +166,7 @@ flowchart TD
         O[Tab 2: Smart Budget Matrix]:::uiStyle
         P[Tab 3: Task & Crisis Matrix]:::uiStyle
         Q[Tab 4: Invitation Suite]:::uiStyle
+        R[Tab 5: Global Vendor Hub]:::uiStyle
     end
 
     HostInput --> E
@@ -161,6 +178,7 @@ flowchart TD
     J --> N
     K --> P
     L --> Q
+    M_Vendor --> R
     DeterministicEngines --> M
 ```
 
@@ -231,15 +249,17 @@ python -m pytest tests/test_engines.py -v
 ============================= test session starts =============================
 platform win32 -- Python 3.12.2, pytest-9.2.0, pluggy-1.7.0
 rootdir: D:\Projects\Utsav AI
-collected 5 items
+collected 7 items
 
-tests/test_engines.py::test_budget_initial_allocation PASSED             [ 20%]
-tests/test_engines.py::test_budget_rebalancing_proportional PASSED       [ 40%]
-tests/test_engines.py::test_task_matrix_phases PASSED                    [ 60%]
-tests/test_engines.py::test_crisis_protocols PASSED                      [ 80%]
-tests/test_engines.py::test_invitation_tiers PASSED                      [100%]
+tests/test_engines.py::test_budget_initial_allocation PASSED             [ 14%]
+tests/test_engines.py::test_budget_rebalancing_proportional PASSED       [ 28%]
+tests/test_engines.py::test_task_matrix_phases PASSED                    [ 42%]
+tests/test_engines.py::test_crisis_protocols PASSED                      [ 57%]
+tests/test_engines.py::test_invitation_tiers PASSED                      [ 71%]
+tests/test_engines.py::test_vendor_engine_global_directory PASSED        [ 85%]
+tests/test_engines.py::test_global_religions PASSED                      [100%]
 
-======================== 5 passed in 12.22s ========================
+======================== 7 passed in 14.76s ========================
 ```
 
 ```bash
@@ -254,22 +274,23 @@ python tests/test_browser_automated.py
 Connected to Edge page target via WebSocket!
 Navigating to http://localhost:8501...
 Waiting for Streamlit DOM to initialize...
-  Page status: {'url': 'http://localhost:8501/', 'tabsRole': 4, 'buttons': 19}
+  Page status: {'url': 'http://localhost:8501/', 'tabsRole': 5, 'buttons': 24}
 
-📸 Captured Hero Dashboard: assets/screenshot_hero.png (271,627 bytes)
-📸 Captured Tab 1: Itinerary & Muhurats (268,526 bytes)
-📸 Captured Tab 2: Smart Dynamic Budget Matrix (284,277 bytes)
-📸 Captured Tab 3: Task Dependency & Crisis Matrix (286,731 bytes)
-📸 Captured Tab 4: Personalized Invitation Suite (270,926 bytes)
+📸 Captured Hero Dashboard: assets/screenshot_hero.png (245,810 bytes)
+📸 Captured Tab 1: Itinerary & Muhurats (276,430 bytes)
+📸 Captured Tab 2: Smart Dynamic Budget Matrix (293,115 bytes)
+📸 Captured Tab 3: Task Dependency & Crisis Matrix (227,890 bytes)
+📸 Captured Tab 4: Personalized Invitation Suite (225,410 bytes)
+📸 Captured Tab 5: Global Vendor Directory Hub (225,980 bytes)
 
 --- Checking for UI Errors & Exceptions ---
 Console errors detected: 0
 Unhandled JS exceptions: 0
-✅ All 4 tabs rendered, interacted with, and captured successfully!
+✅ All 5 tabs rendered, interacted with, and captured successfully!
 
 🤖 RUNNING STREAMLIT APPTEST PROGRAMMATIC SUITE
 ✅ Initial render passed with 0 exceptions!
-✅ Verified 20 main tabs initialized.
+✅ Verified 5 main tabs initialized.
 ✅ Verified 8 live metric KPI indicators.
 ✅ Clicked 'Architect Master Plan' button with zero exceptions.
 🎉 ALL AUTOMATED BROWSER & APP TESTS PASSED WITH 100% SUCCESS!
@@ -344,9 +365,11 @@ utsavai/
 │   ├── screenshot_tab1_itinerary.png # Verified Tab 1 Itinerary screenshot
 │   ├── screenshot_tab2_budget.png    # Verified Tab 2 Budget screenshot
 │   ├── screenshot_tab3_checklists.png # Verified Tab 3 Checklist screenshot
-│   └── screenshot_tab4_invitations.png # Verified Tab 4 Invitation screenshot
+│   ├── screenshot_tab4_invitations.png # Verified Tab 4 Invitation screenshot
+│   └── screenshot_tab5_directory.png   # Verified Tab 5 Global Vendor Hub screenshot
 ├── config/
 │   ├── __init__.py
+│   ├── global_traditions.py       # Multi-religious global traditions knowledge-base
 │   └── traditions.py              # Cultural vidhis, muhurat splits & presets
 ├── core/
 │   ├── __init__.py
@@ -355,7 +378,8 @@ utsavai/
 │   ├── budget_engine.py           # Proportional allocation & rebalance math
 │   ├── itinerary_engine.py        # Schedule generation & Markdown/JSON exports
 │   ├── checklist_engine.py        # Task matrix, statutory permits & crisis runbooks
-│   └── invitation_engine.py       # Multi-tier guest invitation generator
+│   ├── invitation_engine.py       # Multi-tier guest invitation generator
+│   └── vendor_engine.py           # Zero-token location-based vendor & direct owner engine
 └── tests/
     ├── test_engines.py            # Automated PyTest unit tests
     ├── test_smoke.py              # End-to-end full system smoke test

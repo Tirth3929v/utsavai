@@ -16,10 +16,12 @@ from config.traditions import (
     DIETARY_PREFERENCES,
     VENUE_TYPES
 )
+from config.global_traditions import GLOBAL_RELIGIONS
 from core.budget_engine import BudgetEngine
 from core.checklist_engine import ChecklistEngine
 from core.invitation_engine import InvitationEngine
 from core.itinerary_engine import ItineraryEngine
+from core.vendor_engine import VendorEngine
 from core.ai_client import UtsavAIEngine
 
 # ---------------------------------------------------------
@@ -231,6 +233,14 @@ def initialize_state():
         st.session_state.venue_location = "Royal Heritage Palace & Resorts, Udaipur"
     if "rsvp_contact" not in st.session_state:
         st.session_state.rsvp_contact = "+91 98765 43210 / celebrate@utsavai.com"
+    if "selected_religion" not in st.session_state:
+        st.session_state.selected_religion = "Hinduism"
+    if "selected_country" not in st.session_state:
+        st.session_state.selected_country = "India"
+    if "selected_state" not in st.session_state:
+        st.session_state.selected_state = "Gujarat"
+    if "selected_city" not in st.session_state:
+        st.session_state.selected_city = "Surat"
 
     # Allocations
     if "budget_allocations" not in st.session_state:
@@ -288,19 +298,58 @@ with st.sidebar:
         if api_key_input:
             os.environ["GEMINI_API_KEY"] = api_key_input
 
-    st.markdown("### 🏛️ Event Scope & Heritage")
+    st.markdown("### 🏛️ Global Heritage & Location")
+    
+    # Faith & World Religion Selection
+    religions_list = list(GLOBAL_RELIGIONS.keys())
+    selected_religion = st.selectbox(
+        "Faith & Religion Tradition",
+        religions_list,
+        index=religions_list.index(st.session_state.selected_religion) if st.session_state.selected_religion in religions_list else 0
+    )
+    st.session_state.selected_religion = selected_religion
+
+    # Sub-traditions under this religion
+    sub_trad_dict = GLOBAL_RELIGIONS.get(selected_religion, {}).get("sub_traditions", {})
+    sub_trad_names = list(sub_trad_dict.keys()) if sub_trad_dict else list(CULTURAL_TRADITIONS.keys())
+
+    selected_tradition = st.selectbox(
+        "Sub-Tradition / Ceremony Style",
+        sub_trad_names,
+        index=0 if st.session_state.tradition not in sub_trad_names else sub_trad_names.index(st.session_state.tradition)
+    )
+
     selected_event = st.selectbox(
         "Event Type",
         EVENT_TYPES,
         index=EVENT_TYPES.index(st.session_state.event_type) if st.session_state.event_type in EVENT_TYPES else 0
     )
 
-    traditions_list = list(CULTURAL_TRADITIONS.keys())
-    selected_tradition = st.selectbox(
-        "Culture & Sub-Tradition",
-        traditions_list,
-        index=traditions_list.index(st.session_state.tradition) if st.session_state.tradition in traditions_list else 0
+    # Global Location Selector
+    st.markdown("### 📍 Destination & Host City")
+    c_list = VendorEngine.get_supported_countries()
+    sel_country = st.selectbox(
+        "Country",
+        c_list,
+        index=c_list.index(st.session_state.selected_country) if st.session_state.selected_country in c_list else 0
     )
+    st.session_state.selected_country = sel_country
+
+    s_list = VendorEngine.get_states_for_country(sel_country)
+    sel_state = st.selectbox(
+        "State / Province",
+        s_list,
+        index=s_list.index(st.session_state.selected_state) if st.session_state.selected_state in s_list else 0
+    )
+    st.session_state.selected_state = sel_state
+
+    city_list = VendorEngine.get_cities_for_state(sel_country, sel_state)
+    sel_city = st.selectbox(
+        "City",
+        city_list,
+        index=city_list.index(st.session_state.selected_city) if st.session_state.selected_city in city_list else 0
+    )
+    st.session_state.selected_city = sel_city
 
     col_cur, col_bud = st.columns([1, 2.5])
     with col_cur:
@@ -342,8 +391,10 @@ with st.sidebar:
         st.session_state.start_date = start_date
         st.session_state.venue_type = venue_type
         st.session_state.dietary = dietary
+        st.session_state.venue_location = f"{sel_city}, {sel_state}, {sel_country}"
 
-        trad_meta = CULTURAL_TRADITIONS.get(selected_tradition, {})
+        rel_data = GLOBAL_RELIGIONS.get(selected_religion, {}).get("sub_traditions", {})
+        trad_meta = rel_data.get(selected_tradition, CULTURAL_TRADITIONS.get(selected_tradition, {}))
         split = trad_meta.get("default_budget_split")
         st.session_state.budget_allocations = BudgetEngine.calculate_initial_allocation(
             total_budget,
@@ -443,11 +494,12 @@ st.markdown("<br>", unsafe_allow_html=True)
 # ---------------------------------------------------------
 # Multi-Tab Navigation
 # ---------------------------------------------------------
-tab_itinerary, tab_budget, tab_checklists, tab_invitations = st.tabs([
+tab_itinerary, tab_budget, tab_checklists, tab_invitations, tab_directory = st.tabs([
     "📅 Master Itinerary & Muhurats",
     "💰 Smart Dynamic Budget Matrix",
     "📋 Task Dependency & Crisis Matrix",
-    "💌 Personalized Invitation Suite"
+    "💌 Personalized Invitation Suite",
+    "🌐 Global Vendor & Venue Directory"
 ])
 
 
@@ -917,6 +969,100 @@ with tab_invitations:
 
             with fmt_email:
                 st.text_area("Email Invitation Copy", value=tier_content["email_copy"], height=240, key=f"email_{i}")
+
+
+# =========================================================
+# TAB 5: Global Vendor & Venue Directory Hub
+# =========================================================
+with tab_directory:
+    st.markdown("### 🌐 Global Venue, Planner & Owner Direct Connection Hub")
+    st.caption("Directly connect with venue owners, lead event planners, and banquet chefs worldwide. Real photos, verified occasion spend requirements, direct WhatsApp/Call links, and live Google Maps.")
+
+    # Location controls bar
+    c_loc1, c_loc2, c_loc3, c_loc4 = st.columns([1.2, 1.2, 1.2, 1.4])
+    
+    with c_loc1:
+        countries_list = VendorEngine.get_supported_countries()
+        curr_country = st.session_state.selected_country if st.session_state.selected_country in countries_list else countries_list[0]
+        sel_country = st.selectbox("Destination Country", countries_list, index=countries_list.index(curr_country), key="tab5_country")
+        st.session_state.selected_country = sel_country
+
+    with c_loc2:
+        states_list = VendorEngine.get_states_for_country(sel_country)
+        curr_state = st.session_state.selected_state if st.session_state.selected_state in states_list else states_list[0]
+        sel_state = st.selectbox("State / Province", states_list, index=states_list.index(curr_state), key="tab5_state")
+        st.session_state.selected_state = sel_state
+
+    with c_loc3:
+        cities_list = VendorEngine.get_cities_for_state(sel_country, sel_state)
+        curr_city = st.session_state.selected_city if st.session_state.selected_city in cities_list else cities_list[0]
+        sel_city = st.selectbox("City", cities_list, index=cities_list.index(curr_city), key="tab5_city")
+        st.session_state.selected_city = sel_city
+
+    with c_loc4:
+        cat_filter = st.selectbox(
+            "Service Category",
+            ["All Categories", "Venue & Banquets", "Lead Event Management", "Banquet Caterer", "Decor Architect"],
+            key="tab5_category"
+        )
+
+    # Fetch directory cards (zero tokens consumed!)
+    vendors = VendorEngine.fetch_vendors_and_venues(
+        country=sel_country,
+        state=sel_state,
+        city=sel_city,
+        event_type=st.session_state.event_type,
+        category_filter=cat_filter,
+        currency_symbol=curr
+    )
+
+    st.markdown(f"##### 📍 Showing {len(vendors)} Verified Partners in {sel_city}, {sel_state}, {sel_country}")
+
+    for idx, v in enumerate(vendors):
+        with st.container(border=True):
+            col_v1, col_v2 = st.columns([1, 2.3])
+            with col_v1:
+                st.image(v["photo"], use_container_width=True)
+                st.markdown(f"""
+                    <div style="text-align: center; margin-top: 8px;">
+                        <span style="background: rgba(16, 185, 129, 0.15); color: #10B981; border: 1px solid #10B981; padding: 2px 8px; border-radius: 6px; font-size: 0.78rem; font-weight: 700;">
+                            ✓ Verified Partner
+                        </span>
+                        <div style="color: #FFB703; font-weight: 700; font-size: 0.92rem; margin-top: 4px;">
+                            ★ {v['rating']} <span style="color: #94A3B8; font-weight: 400; font-size: 0.8rem;">({v['reviews_count']} reviews)</span>
+                        </div>
+                    </div>
+                """, unsafe_allow_html=True)
+            with col_v2:
+                st.markdown(f"### {v['name']}")
+                st.markdown(f"**🏷️ Role / Category:** `{v['category']}` &nbsp;|&nbsp; **👤 Owner / Contact:** **{v['owner']}** *({v['role_title']})*")
+                
+                # Pricing & Spend Highlight
+                st.markdown(f"""
+                    <div style="background: #171B2E; border-left: 3px solid #D4AF37; padding: 8px 14px; border-radius: 0 8px 8px 0; margin: 10px 0;">
+                        <span style="color: #94A3B8; font-size: 0.82rem; text-transform: uppercase; letter-spacing: 0.5px;">Required Occasion Spend / Budget:</span><br/>
+                        <span style="color: #FFD166; font-size: 1.25rem; font-weight: 700; font-family: 'Cinzel', serif;">{v['estimated_spend']}</span>
+                        <span style="color: #CBD5E1; font-size: 0.85rem;"> • {v['pricing_unit']}</span>
+                    </div>
+                """, unsafe_allow_html=True)
+
+                st.markdown(f"🏆 **Verified Track Record:** {v['projects_completed']}")
+                st.markdown(f"📍 **Address / Location:** {v['address']}")
+                
+                # Specialties pills
+                specialty_html = " ".join([f"<span class='pill-badge' style='font-size: 0.75rem; padding: 2px 8px;'>✨ {spec}</span>" for spec in v.get("specialties", [])])
+                st.markdown(f"<div style='margin-bottom: 12px;'>{specialty_html}</div>", unsafe_allow_html=True)
+
+                # Direct Connection Action Buttons
+                b_c1, b_c2, b_c3, b_c4 = st.columns(4)
+                with b_c1:
+                    st.link_button("📞 Call Direct", v["call_link"], use_container_width=True)
+                with b_c2:
+                    st.link_button("💬 Chat WhatsApp", v["whatsapp_link"], use_container_width=True)
+                with b_c3:
+                    st.link_button("📍 Google Maps", v["maps_url"], use_container_width=True)
+                with b_c4:
+                    st.link_button("✉️ Email Direct", f"mailto:{v['email']}", use_container_width=True)
 
 
 # ---------------------------------------------------------

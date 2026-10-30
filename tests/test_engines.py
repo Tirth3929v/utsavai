@@ -10,7 +10,9 @@ from core.budget_engine import BudgetEngine
 from core.checklist_engine import ChecklistEngine
 from core.itinerary_engine import ItineraryEngine
 from core.invitation_engine import InvitationEngine
+from core.vendor_engine import VendorEngine
 from config.traditions import CULTURAL_TRADITIONS
+from config.global_traditions import GLOBAL_RELIGIONS
 
 def test_budget_initial_allocation():
     total_budget = 2000000.0  # 20 Lakhs
@@ -69,10 +71,37 @@ def test_invitation_tiers():
     assert any("Friends" in k for k in invites.keys())
     assert any("Colleagues" in k for k in invites.keys())
 
+def test_vendor_engine_global_directory():
+    # Test specific seeded city
+    vendors_surat = VendorEngine.fetch_vendors_and_venues("India", "Gujarat", "Surat")
+    assert len(vendors_surat) >= 3
+    for v in vendors_surat:
+        assert "name" in v and "owner" in v
+        assert "photo" in v and v["photo"].startswith("http")
+        assert "whatsapp_link" in v and "wa.me" in v["whatsapp_link"]
+        assert "maps_url" in v and "google.com/maps" in v["maps_url"]
+        assert "estimated_spend" in v
+        assert "projects_completed" in v
+
+    # Test dynamic global fallback for international city (e.g., Warsaw or Tokyo)
+    vendors_intl = VendorEngine.fetch_vendors_and_venues("Poland", "Masovian", "Warsaw")
+    assert len(vendors_intl) >= 1
+    assert "owner" in vendors_intl[0]
+    assert "estimated_spend" in vendors_intl[0]
+
+def test_global_religions():
+    assert len(GLOBAL_RELIGIONS) >= 6
+    for rel_name, rel_data in GLOBAL_RELIGIONS.items():
+        assert "calendar_system" in rel_data
+        assert "dietary_standard" in rel_data
+        assert "sub_traditions" in rel_data and len(rel_data["sub_traditions"]) > 0
+
 if __name__ == "__main__":
     test_budget_initial_allocation()
     test_budget_rebalancing_proportional()
     test_task_matrix_phases()
     test_crisis_protocols()
     test_invitation_tiers()
+    test_vendor_engine_global_directory()
+    test_global_religions()
     print("SUCCESS: All UtsavAI engine tests passed successfully!")

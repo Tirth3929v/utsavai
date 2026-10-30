@@ -169,7 +169,7 @@ async def run_browser_automation():
             """)
             val = status_res.get("result", {}).get("value", {})
             print(f"  [Tick {i+1}] Page status: {val}")
-            if val.get("tabsRole", 0) >= 4 or val.get("stTabs", 0) >= 4:
+            if val.get("tabsRole", 0) >= 5 or val.get("stTabs", 0) >= 5:
                 break
 
         # Capture Hero Overview
@@ -182,7 +182,8 @@ async def run_browser_automation():
             ("Tab 1: Itinerary & Muhurats", "screenshot_tab1_itinerary.png"),
             ("Tab 2: Smart Dynamic Budget Matrix", "screenshot_tab2_budget.png"),
             ("Tab 3: Task Dependency & Crisis Matrix", "screenshot_tab3_checklists.png"),
-            ("Tab 4: Personalized Invitation Suite", "screenshot_tab4_invitations.png")
+            ("Tab 4: Personalized Invitation Suite", "screenshot_tab4_invitations.png"),
+            ("Tab 5: Global Vendor Directory Hub", "screenshot_tab5_directory.png")
         ]
 
         for idx, (t_name, filename) in enumerate(tab_names):
@@ -241,7 +242,7 @@ def run_programmatic_apptest_suite():
     print(f"✅ Initial render passed with 0 exceptions!")
 
     # Verify tabs present
-    assert len(at.tabs) >= 4, f"Expected 4 tabs, got {len(at.tabs)}"
+    assert len(at.tabs) >= 5, f"Expected at least 5 tabs, got {len(at.tabs)}"
     print(f"✅ Verified {len(at.tabs)} main tabs initialized.")
 
     # Verify metrics present
