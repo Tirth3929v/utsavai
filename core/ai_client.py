@@ -1,12 +1,19 @@
 """
 AI Orchestration Layer for UtsavAI.
-Utilizes Google Gemini with structured JSON mode and robust fallback architecture.
+Utilizes Google Gemini 2.5 Flash with structured JSON mode, dynamic multi-key failover,
+and robust two-tier cultural preset fallback.
 """
 
 import os
 import json
 import re
-from typing import Dict, Any, Optional
+from typing import Dict, Any, Optional, List
+
+try:
+    from dotenv import load_dotenv
+    load_dotenv()
+except ImportError:
+    pass
 
 try:
     from google import genai
@@ -33,50 +40,68 @@ from core.prompts import (
 )
 
 
-def _resolve_api_key(explicit_key: Optional[str] = None) -> Optional[str]:
-    """Safely resolve API key from parameter, Streamlit secrets, or environment variable."""
+def _resolve_api_keys(explicit_key: Optional[str] = None) -> List[str]:
+    """Safely resolve primary and failover API keys from parameter, Streamlit secrets, or environment."""
+    keys: List[str] = []
+
+    # 1. Explicit parameter
     if explicit_key and explicit_key.strip():
-        return explicit_key.strip()
+        keys.append(explicit_key.strip())
+
+    # 2. Streamlit Secrets
     try:
         import streamlit as st
-        if hasattr(st, "secrets") and "GEMINI_API_KEY" in st.secrets:
-            key = st.secrets["GEMINI_API_KEY"]
-            if key and key.strip():
-                return key.strip()
+        if hasattr(st, "secrets"):
+            for sec_name in ["GEMINI_API_KEY", "GEMINI_API_KEY_BACKUP", "GOOGLE_API_KEY"]:
+                if sec_name in st.secrets and st.secrets[sec_name]:
+                    k = str(st.secrets[sec_name]).strip()
+                    if k and k not in keys:
+                        keys.append(k)
     except Exception:
         pass
-    return os.getenv("GEMINI_API_KEY")
+
+    # 3. Environment Variables
+    for env_name in ["GEMINI_API_KEY", "GEMINI_API_KEY_BACKUP", "GOOGLE_API_KEY"]:
+        val = os.getenv(env_name)
+        if val and val.strip():
+            k = val.strip()
+            if k not in keys:
+                keys.append(k)
+
+    return keys
 
 
 class UtsavAIEngine:
-    """Handles LLM calls for cultural timelines, budget rebalancing chains, and crisis protocols."""
+    """Handles LLM calls for cultural timelines, budget rebalancing chains, and crisis protocols with multi-key failover."""
 
     def __init__(self, api_key: Optional[str] = None):
-        self.api_key = _resolve_api_key(api_key)
+        self.api_keys: List[str] = _resolve_api_keys(api_key)
+        self.api_key: Optional[str] = self.api_keys[0] if self.api_keys else None
         self.client = None
         self._init_client()
 
     def _init_client(self):
-        """Initialize the Gemini client if key is present."""
-        if not self.api_key:
+        """Initialize the Gemini client using the primary key if present."""
+        if not self.api_keys:
             return
 
+        primary_key = self.api_keys[0]
         if GENAI_V2_AVAILABLE:
             try:
-                self.client = genai.Client(api_key=self.api_key)
+                self.client = genai.Client(api_key=primary_key)
                 return
             except Exception:
                 pass
 
         if GENAI_V1_AVAILABLE:
             try:
-                legacy_genai.configure(api_key=self.api_key)
+                legacy_genai.configure(api_key=primary_key)
                 self.client = "legacy"
             except Exception:
                 pass
 
     def is_configured(self) -> bool:
-        return self.client is not None
+        return len(self.api_keys) > 0
 
     def _clean_json_text(self, text: str) -> str:
         """Strip markdown fences, whitespace, and leading/trailing non-JSON chars."""
@@ -88,6 +113,82 @@ class UtsavAIEngine:
         if cleaned.endswith("```"):
             cleaned = cleaned[:-3]
         return cleaned.strip()
+
+    def _execute_gemini_call(
+        self,
+        system_prompt: str,
+        user_prompt: str,
+        temperature: float = 0.3
+    ) -> Optional[str]:
+        """
+        Executes an LLM request across the pool of available API keys.
+        Automatically fails over to backup keys if quota or rate-limiting errors occur.
+        """
+        if not self.api_keys:
+            return None
+
+        last_error = None
+        for key in self.api_keys:
+            try:
+                if GENAI_V2_AVAILABLE:
+                    client = genai.Client(api_key=key)
+                    response = client.models.generate_content(
+                        model='gemini-2.5-flash',
+                        contents=user_prompt,
+                        config=types.GenerateContentConfig(
+                            system_instruction=system_prompt,
+                            temperature=temperature,
+                            response_mime_type="application/json"
+                        )
+                    )
+                    if response and response.text:
+                        return response.text
+                elif GENAI_V1_AVAILABLE:
+                    legacy_genai.configure(api_key=key)
+                    model = legacy_genai.GenerativeModel(
+                        "gemini-1.5-flash",
+                        system_instruction=system_prompt
+                    )
+                    response = model.generate_content(
+                        user_prompt,
+                        generation_config={"response_mime_type": "application/json", "temperature": temperature}
+                    )
+                    if response and response.text:
+                        return response.text
+            except Exception as e:
+                last_error = e
+                # Fail over to the next key in the pool
+                continue
+
+        if last_error:
+            # All keys failed or exhausted
+            pass
+        return None
+
+    def _execute_text_call(self, prompt: str) -> Optional[str]:
+        """Executes a plain-text LLM generation request with key failover."""
+        if not self.api_keys:
+            return None
+
+        for key in self.api_keys:
+            try:
+                if GENAI_V2_AVAILABLE:
+                    client = genai.Client(api_key=key)
+                    response = client.models.generate_content(
+                        model='gemini-2.5-flash',
+                        contents=prompt
+                    )
+                    if response and response.text:
+                        return response.text
+                elif GENAI_V1_AVAILABLE:
+                    legacy_genai.configure(api_key=key)
+                    model = legacy_genai.GenerativeModel("gemini-1.5-flash")
+                    response = model.generate_content(prompt)
+                    if response and response.text:
+                        return response.text
+            except Exception:
+                continue
+        return None
 
     def generate_custom_itinerary(
         self,
@@ -119,28 +220,8 @@ class UtsavAIEngine:
         )
 
         try:
-            if GENAI_V2_AVAILABLE and isinstance(self.client, genai.Client):
-                response = self.client.models.generate_content(
-                    model='gemini-2.5-flash',
-                    contents=user_prompt,
-                    config=types.GenerateContentConfig(
-                        system_instruction=system_prompt,
-                        temperature=0.3,
-                        response_mime_type="application/json"
-                    )
-                )
-                raw_text = response.text
-            elif GENAI_V1_AVAILABLE:
-                model = legacy_genai.GenerativeModel(
-                    "gemini-1.5-flash",
-                    system_instruction=system_prompt
-                )
-                response = model.generate_content(
-                    user_prompt,
-                    generation_config={"response_mime_type": "application/json", "temperature": 0.3}
-                )
-                raw_text = response.text
-            else:
+            raw_text = self._execute_gemini_call(system_prompt, user_prompt, temperature=0.3)
+            if not raw_text:
                 return {"source": "preset"}
 
             cleaned = self._clean_json_text(raw_text)
@@ -170,28 +251,8 @@ class UtsavAIEngine:
         )
 
         try:
-            if GENAI_V2_AVAILABLE and isinstance(self.client, genai.Client):
-                response = self.client.models.generate_content(
-                    model='gemini-2.5-flash',
-                    contents=prompt,
-                    config=types.GenerateContentConfig(
-                        system_instruction=BUDGET_SYSTEM_PROMPT,
-                        temperature=0.2,
-                        response_mime_type="application/json"
-                    )
-                )
-                raw_text = response.text
-            elif GENAI_V1_AVAILABLE:
-                model = legacy_genai.GenerativeModel(
-                    "gemini-1.5-flash",
-                    system_instruction=BUDGET_SYSTEM_PROMPT
-                )
-                response = model.generate_content(
-                    prompt,
-                    generation_config={"response_mime_type": "application/json", "temperature": 0.2}
-                )
-                raw_text = response.text
-            else:
+            raw_text = self._execute_gemini_call(BUDGET_SYSTEM_PROMPT, prompt, temperature=0.2)
+            if not raw_text:
                 return {"source": "preset"}
 
             cleaned = self._clean_json_text(raw_text)
@@ -230,28 +291,8 @@ class UtsavAIEngine:
         )
 
         try:
-            if GENAI_V2_AVAILABLE and isinstance(self.client, genai.Client):
-                response = self.client.models.generate_content(
-                    model='gemini-2.5-flash',
-                    contents=prompt,
-                    config=types.GenerateContentConfig(
-                        system_instruction=BUDGET_SYSTEM_PROMPT,
-                        temperature=0.2,
-                        response_mime_type="application/json"
-                    )
-                )
-                raw_text = response.text
-            elif GENAI_V1_AVAILABLE:
-                model = legacy_genai.GenerativeModel(
-                    "gemini-1.5-flash",
-                    system_instruction=BUDGET_SYSTEM_PROMPT
-                )
-                response = model.generate_content(
-                    prompt,
-                    generation_config={"response_mime_type": "application/json", "temperature": 0.2}
-                )
-                raw_text = response.text
-            else:
+            raw_text = self._execute_gemini_call(BUDGET_SYSTEM_PROMPT, prompt, temperature=0.2)
+            if not raw_text:
                 return {"source": "preset"}
 
             cleaned = self._clean_json_text(raw_text)
@@ -283,28 +324,8 @@ class UtsavAIEngine:
         )
 
         try:
-            if GENAI_V2_AVAILABLE and isinstance(self.client, genai.Client):
-                response = self.client.models.generate_content(
-                    model='gemini-2.5-flash',
-                    contents=user_prompt,
-                    config=types.GenerateContentConfig(
-                        system_instruction=CRISIS_DEPENDENCY_SYSTEM_PROMPT,
-                        temperature=0.3,
-                        response_mime_type="application/json"
-                    )
-                )
-                raw_text = response.text
-            elif GENAI_V1_AVAILABLE:
-                model = legacy_genai.GenerativeModel(
-                    "gemini-1.5-flash",
-                    system_instruction=CRISIS_DEPENDENCY_SYSTEM_PROMPT
-                )
-                response = model.generate_content(
-                    user_prompt,
-                    generation_config={"response_mime_type": "application/json", "temperature": 0.3}
-                )
-                raw_text = response.text
-            else:
+            raw_text = self._execute_gemini_call(CRISIS_DEPENDENCY_SYSTEM_PROMPT, user_prompt, temperature=0.3)
+            if not raw_text:
                 return {"source": "preset"}
 
             cleaned = self._clean_json_text(raw_text)
@@ -343,18 +364,8 @@ Analyze this budget breakdown:
 Provide 3 crisp, high-impact financial optimization bullet points (Vendor negotiation hacks, high-ROI areas, and risk areas to watch).
 Return clean markdown format with bold headers and emoji markers.
 """
-        try:
-            if GENAI_V2_AVAILABLE and isinstance(self.client, genai.Client):
-                response = self.client.models.generate_content(
-                    model='gemini-2.5-flash',
-                    contents=prompt
-                )
-                return response.text
-            elif GENAI_V1_AVAILABLE:
-                model = legacy_genai.GenerativeModel("gemini-1.5-flash")
-                response = model.generate_content(prompt)
-                return response.text
-        except Exception:
-            pass
+        text_resp = self._execute_text_call(prompt)
+        if text_resp and text_resp.strip():
+            return text_resp.strip()
 
         return "💡 Allocation aligned with regional benchmarks. Verify live food counter minimum guarantees before signing catering agreements."

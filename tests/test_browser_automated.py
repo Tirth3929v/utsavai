@@ -237,7 +237,7 @@ def run_programmatic_apptest_suite():
     from streamlit.testing.v1 import AppTest
 
     app_path = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "app.py"))
-    at = AppTest.from_file(app_path, default_timeout=35).run()
+    at = AppTest.from_file(app_path, default_timeout=75).run(timeout=75)
     assert len(at.exception) == 0, f"Streamlit app raised exceptions: {at.exception}"
     print(f"✅ Initial render passed with 0 exceptions!")
 

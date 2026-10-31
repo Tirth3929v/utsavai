@@ -10,6 +10,12 @@ import pandas as pd
 import streamlit as st
 import plotly.express as px
 
+try:
+    from dotenv import load_dotenv
+    load_dotenv()
+except ImportError:
+    pass
+
 from config.traditions import (
     CULTURAL_TRADITIONS,
     EVENT_TYPES,
@@ -279,22 +285,33 @@ with st.sidebar:
         </div>
     """, unsafe_allow_html=True)
 
-    # Secrets Detection for Streamlit Cloud
-    has_secret_key = False
+    # Secrets Detection for Streamlit Cloud & Environment
+    has_primary_key = False
+    has_backup_key = False
     try:
-        if hasattr(st, "secrets") and "GEMINI_API_KEY" in st.secrets and st.secrets["GEMINI_API_KEY"]:
-            has_secret_key = True
+        if hasattr(st, "secrets"):
+            if "GEMINI_API_KEY" in st.secrets and st.secrets["GEMINI_API_KEY"]:
+                has_primary_key = True
+            if "GEMINI_API_KEY_BACKUP" in st.secrets and st.secrets["GEMINI_API_KEY_BACKUP"]:
+                has_backup_key = True
     except Exception:
         pass
 
+    if os.getenv("GEMINI_API_KEY"):
+        has_primary_key = True
+    if os.getenv("GEMINI_API_KEY_BACKUP"):
+        has_backup_key = True
+
     with st.expander("🔑 AI Intelligence & API Keys", expanded=False):
-        if has_secret_key:
-            st.success("🔒 GEMINI_API_KEY detected via Streamlit Secrets!")
+        if has_primary_key:
+            st.success("🔒 Primary Gemini API Key Connected!")
+        if has_backup_key:
+            st.info("🛡️ Backup Failover Key Active (Multi-Key Pool)")
         api_key_input = st.text_input(
-            "Google Gemini API Key",
-            value="" if has_secret_key else os.getenv("GEMINI_API_KEY", ""),
+            "Google Gemini API Key (Override)",
+            value="",
             type="password",
-            help="Optional. Leave blank to run in calibrated cultural preset mode, or if configured in Streamlit Cloud Secrets."
+            help="Optional. Keys are securely connected via .env or Streamlit Secrets. You can provide an override here."
         )
         if api_key_input:
             os.environ["GEMINI_API_KEY"] = api_key_input

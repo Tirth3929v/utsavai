@@ -249,19 +249,20 @@ python -m pytest tests/test_engines.py -v
 ============================= test session starts =============================
 platform win32 -- Python 3.12.2, pytest-9.2.0, pluggy-1.7.0
 rootdir: D:\Projects\Utsav AI
-collected 9 items
+collected 10 items
 
-tests/test_engines.py::test_budget_initial_allocation PASSED             [ 11%]
-tests/test_engines.py::test_budget_rebalancing_proportional PASSED       [ 22%]
-tests/test_engines.py::test_task_matrix_phases PASSED                    [ 33%]
-tests/test_engines.py::test_crisis_protocols PASSED                      [ 44%]
-tests/test_engines.py::test_invitation_tiers PASSED                      [ 55%]
-tests/test_engines.py::test_vendor_engine_global_directory PASSED        [ 66%]
-tests/test_engines.py::test_global_religions PASSED                      [ 77%]
-tests/test_engines.py::test_prompt_theological_isolation_christianity PASSED [ 88%]
-tests/test_engines.py::test_christian_invitations_and_checklists PASSED  [100%]
+tests/test_engines.py::test_budget_initial_allocation PASSED             [ 10%]
+tests/test_engines.py::test_budget_rebalancing_proportional PASSED       [ 20%]
+tests/test_engines.py::test_task_matrix_phases PASSED                    [ 30%]
+tests/test_engines.py::test_crisis_protocols PASSED                      [ 40%]
+tests/test_engines.py::test_invitation_tiers PASSED                      [ 50%]
+tests/test_engines.py::test_vendor_engine_global_directory PASSED        [ 60%]
+tests/test_engines.py::test_global_religions PASSED                      [ 70%]
+tests/test_engines.py::test_prompt_theological_isolation_christianity PASSED [ 80%]
+tests/test_engines.py::test_christian_invitations_and_checklists PASSED  [ 90%]
+tests/test_engines.py::test_multi_key_resolution_and_failover PASSED     [100%]
 
-======================== 9 passed in 14.63s ========================
+======================= 10 passed in 35.73s =======================
 ```
 
 ```bash

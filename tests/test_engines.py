@@ -11,6 +11,7 @@ from core.checklist_engine import ChecklistEngine
 from core.itinerary_engine import ItineraryEngine
 from core.invitation_engine import InvitationEngine
 from core.vendor_engine import VendorEngine
+from core.ai_client import UtsavAIEngine, _resolve_api_keys
 from core.prompts import build_timeline_system_prompt, build_timeline_user_prompt
 from config.traditions import CULTURAL_TRADITIONS
 from config.global_traditions import GLOBAL_RELIGIONS
@@ -142,6 +143,16 @@ def test_christian_invitations_and_checklists():
     assert "Sacred Church Liturgy & Ceremony Preparation Kit" in checklists
     assert "Auspicious Pooja & Sacred Samagri Kit" not in checklists
 
+def test_multi_key_resolution_and_failover():
+    keys = _resolve_api_keys()
+    assert len(keys) >= 2, f"Expected at least 2 keys in pool, got {len(keys)}"
+    assert keys[0].startswith("AQ.")
+    assert keys[1].startswith("AQ.")
+
+    engine = UtsavAIEngine()
+    assert engine.is_configured() is True
+    assert len(engine.api_keys) >= 2
+
 if __name__ == "__main__":
     test_budget_initial_allocation()
     test_budget_rebalancing_proportional()
@@ -150,4 +161,7 @@ if __name__ == "__main__":
     test_invitation_tiers()
     test_vendor_engine_global_directory()
     test_global_religions()
+    test_prompt_theological_isolation_christianity()
+    test_christian_invitations_and_checklists()
+    test_multi_key_resolution_and_failover()
     print("SUCCESS: All UtsavAI engine tests passed successfully!")
