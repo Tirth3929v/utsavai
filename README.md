@@ -206,6 +206,19 @@ sequenceDiagram
 
 ---
 
+## 🤖 GenAI Services Utilized & Implementation Architecture
+
+**GenAI Services Utilized:** **Google Gemini API** (*Gemini 2.5 Flash* model via a custom, fault-tolerant Python AI orchestration client with structured JSON-mode enforced parsing).
+
+### Where and How it was Utilized:
+1. **Cultural Timeline & Liturgical Scheduling Engine:** Used to generate precise day-wise and hour-wise ritual sequencing, dress codes, and operational notes tailored strictly to the user's selected global religion and sub-tradition with zero theological cross-contamination.
+2. **Smart Dynamic Budget Rebalancer Chain:** Utilized for natural language rebalancing directives and financial advisory insights, analyzing per-guest capital distribution, vendor cashflow liquidity, and contingency reserves.
+3. **Task Dependency & Crisis Protocol Generator:** Used to synthesize tailored vendor SLA questionnaires and unseasonal weather crisis failover runbooks.
+4. **Multi-Tier Invitation Generator:** Leveraged to craft culturally and religiously resonant invitation text and emoji-formatted WhatsApp broadcasts across distinct demographic tiers (Sacred Elders, Celebration Circle, and Professional Network).
+5. **Hybrid Low-Token Architecture:** Combined with local Python dictionaries for static vendor/religious presets to ensure near-zero AI token waste, sub-second latency, and resilience against API rate limits.
+
+---
+
 ## 🧠 Advanced Prompt Engineering Blueprint
 
 Judges evaluating PromptWars look for deep prompting mastery. Rather than using generic text generation, UtsavAI employs **structured JSON schema validation, temperature differentiation, and stateful prompt chaining.**
