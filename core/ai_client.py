@@ -79,6 +79,12 @@ class UtsavAIEngine:
     """Handles LLM calls for cultural timelines, budget rebalancing chains, and crisis protocols with multi-key failover."""
 
     def __init__(self, api_key: Optional[str] = None):
+        """Initializes the AI orchestration client with multi-key failover support.
+
+        Args:
+            api_key: Optional explicit API key override. If omitted, keys are resolved
+                     automatically from environment variables or Streamlit secrets.
+        """
         self.api_keys: List[str] = _resolve_api_keys(api_key)
         self.api_key: Optional[str] = self.api_keys[0] if self.api_keys else None
         self.client = None
@@ -105,6 +111,11 @@ class UtsavAIEngine:
                 pass
 
     def is_configured(self) -> bool:
+        """Checks whether at least one valid Gemini API key is configured and active.
+
+        Returns:
+            True if one or more API keys are available in the failover pool.
+        """
         return len(self.api_keys) > 0
 
     def _clean_json_text(self, text: str) -> str:

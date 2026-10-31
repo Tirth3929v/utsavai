@@ -28,7 +28,10 @@ ASSETS_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "asse
 os.makedirs(ASSETS_DIR, exist_ok=True)
 
 class CDPClient:
-    def __init__(self, ws_url):
+    """Lightweight Chrome DevTools Protocol client for controlling headless Chromium/Edge browsers."""
+
+    def __init__(self, ws_url: str):
+        """Initializes the CDP client with the target WebSocket endpoint."""
         self.ws_url = ws_url
         self.ws = None
         self.msg_id = 0
@@ -37,12 +40,14 @@ class CDPClient:
         self.pending_requests = {}
         self.listener_task = None
 
-    async def connect(self):
+    async def connect(self) -> None:
+        """Establishes an asynchronous WebSocket connection to the browser session."""
         import websockets
         self.ws = await websockets.connect(self.ws_url, max_size=30*1024*1024)
         self.listener_task = asyncio.create_task(self._listen())
 
-    async def _listen(self):
+    async def _listen(self) -> None:
+        """Continuously listens for incoming CDP events, exceptions, and console messages."""
         try:
             async for msg in self.ws:
                 data = json.loads(msg)
@@ -63,7 +68,8 @@ class CDPClient:
         except Exception:
             pass
 
-    async def send(self, method, params=None):
+    async def send(self, method: str, params: dict = None) -> dict:
+        """Sends a JSON-RPC command over CDP and awaits the response payload."""
         self.msg_id += 1
         req_id = self.msg_id
         fut = asyncio.get_running_loop().create_future()
@@ -76,14 +82,16 @@ class CDPClient:
             self.pending_requests.pop(req_id, None)
             return {}
 
-    async def evaluate(self, expression):
+    async def evaluate(self, expression: str) -> dict:
+        """Evaluates a JavaScript expression within the browser window context."""
         res = await self.send("Runtime.evaluate", {
             "expression": expression,
             "returnByValue": True
         })
         return res
 
-    async def capture_screenshot(self, filepath):
+    async def capture_screenshot(self, filepath: str) -> int:
+        """Captures a PNG screenshot via CDP and writes the binary bytes to disk."""
         res = await self.send("Page.captureScreenshot", {
             "format": "png",
             "quality": 95
@@ -97,7 +105,8 @@ class CDPClient:
         return 0
 
 
-async def run_browser_automation():
+async def run_browser_automation() -> None:
+    """Launches headless browser and exercises tabs to verify rendering and visual stability."""
     print("=" * 60)
     print("🚀 STARTING AUTOMATED BROWSER VERIFICATION FOR UTSAVAI")
     print("=" * 60)
@@ -238,7 +247,8 @@ async def run_browser_automation():
                 proc.kill()
 
 
-def run_programmatic_apptest_suite():
+def run_programmatic_apptest_suite() -> None:
+    """Runs Streamlit's official headless AppTest engine to programmatically verify widget trees."""
     print("\n" + "=" * 60, flush=True)
     print("🤖 RUNNING STREAMLIT APPTEST PROGRAMMATIC SUITE", flush=True)
     print("=" * 60, flush=True)

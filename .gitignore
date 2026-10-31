@@ -14,15 +14,26 @@ __pycache__/
 # Streamlit
 .streamlit/secrets.toml
 
-# Environment variables
+# Environment variables & secrets
 .env
 *.env
+*.pem
+*.key
+*.cert
+credentials.json
 
 # IDEs
 .vscode/
 .idea/
 *.swp
 *.swo
+
+# Build & packaging
+dist/
+build/
+*.egg-info/
+.coverage
+htmlcov/
 
 # OS files
 Thumbs.db

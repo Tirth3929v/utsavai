@@ -17,7 +17,8 @@ from core.checklist_engine import ChecklistEngine
 from core.invitation_engine import InvitationEngine
 from core.ai_client import UtsavAIEngine
 
-def test_full_system_smoke():
+def test_full_system_smoke() -> None:
+    """Executes an end-to-end smoke verification across all 6 architectural subsystems."""
     print("[1/6] Testing Cultural Traditions Database...")
     assert len(CULTURAL_TRADITIONS) >= 5
     for name, data in CULTURAL_TRADITIONS.items():

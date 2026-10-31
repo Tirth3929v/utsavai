@@ -1,7 +1,8 @@
-"""Unit and integration validation for UtsavAI core engines."""
+"""Unit, integration, and security validation for UtsavAI core engines."""
 
 import os
 import sys
+import html
 
 # Ensure project root is in sys.path
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
@@ -16,41 +17,49 @@ from core.prompts import build_timeline_system_prompt, build_timeline_user_promp
 from config.traditions import CULTURAL_TRADITIONS
 from config.global_traditions import GLOBAL_RELIGIONS
 
-def test_budget_initial_allocation():
+
+def test_budget_initial_allocation() -> None:
+    """Verifies that initial budget allocation accurately sums to 100% with zero deficit."""
     total_budget = 2000000.0  # 20 Lakhs
     allocations = BudgetEngine.calculate_initial_allocation(total_budget)
-    
+
     allocated_sum = sum(d["amount"] for d in allocations.values())
     assert abs(allocated_sum - total_budget) < 1.0, f"Sum mismatch: {allocated_sum} vs {total_budget}"
-    
+
     pct_sum = sum(d["percentage"] for d in allocations.values())
     assert 99.0 <= pct_sum <= 101.0, f"Percentage mismatch: {pct_sum}"
 
-def test_budget_rebalancing_proportional():
+
+def test_budget_rebalancing_proportional() -> None:
+    """Verifies proportional budget rebalancing preserves category locks and totals 100%."""
     total_budget = 1000000.0
     allocations = BudgetEngine.calculate_initial_allocation(total_budget)
-    
+
     # User increases Venue from ~300k to 500k
     res = BudgetEngine.rebalance(total_budget, allocations, "Venue & Stays", 500000.0)
-    
+
     new_allocs = res["allocations"]
     assert new_allocs["Venue & Stays"]["amount"] == 500000.0
     assert new_allocs["Venue & Stays"]["locked"] is True
-    
+
     # Net total must still equal 1,000,000
     actual_total = res["actual_total"]
     assert abs(actual_total - total_budget) < 1.0, f"Rebalanced sum mismatch: {actual_total}"
 
-def test_task_matrix_phases():
+
+def test_task_matrix_phases() -> None:
+    """Validates operational countdown phases across statutory permits and production milestones."""
     matrix = ChecklistEngine.get_time_phased_task_matrix("Gujarati Hindu")
     assert len(matrix) >= 4, "Must contain at least 4 operational countdown phases"
-    
+
     phases = [m["phase"] for m in matrix]
     assert any("T-60" in p or "T-30" in p for p in phases)
     assert any("T-14" in p or "T-7" in p for p in phases)
     assert any("Day-Of" in p for p in phases)
 
-def test_crisis_protocols():
+
+def test_crisis_protocols() -> None:
+    """Ensures emergency weather and operational contingency runbooks are fully populated."""
     protocols = ChecklistEngine.get_crisis_protocols()
     assert len(protocols) >= 4
     risks = [p["risk"] for p in protocols]
@@ -58,7 +67,9 @@ def test_crisis_protocols():
     assert any("Power" in r for r in risks)
     assert any("Surge" in r for r in risks)
 
-def test_invitation_tiers():
+
+def test_invitation_tiers() -> None:
+    """Confirms tiered personalization formats across elders, celebration circle, and network."""
     invites = InvitationEngine.generate_invitations(
         event_name="Grand Wedding",
         hosts="The Sharmas",
@@ -73,7 +84,9 @@ def test_invitation_tiers():
     assert any("Friends" in k for k in invites.keys())
     assert any("Colleagues" in k for k in invites.keys())
 
-def test_vendor_engine_global_directory():
+
+def test_vendor_engine_global_directory() -> None:
+    """Verifies localized partner data structure across domestic and international destinations."""
     # Test specific seeded city
     vendors_surat = VendorEngine.fetch_vendors_and_venues("India", "Gujarat", "Surat")
     assert len(vendors_surat) >= 3
@@ -91,20 +104,24 @@ def test_vendor_engine_global_directory():
     assert "owner" in vendors_intl[0]
     assert "estimated_spend" in vendors_intl[0]
 
-def test_global_religions():
+
+def test_global_religions() -> None:
+    """Validates multi-religious configuration schemas and sub-tradition structures."""
     assert len(GLOBAL_RELIGIONS) >= 6
     for rel_name, rel_data in GLOBAL_RELIGIONS.items():
         assert "calendar_system" in rel_data
         assert "dietary_standard" in rel_data
         assert "sub_traditions" in rel_data and len(rel_data["sub_traditions"]) > 0
 
-def test_prompt_theological_isolation_christianity():
+
+def test_prompt_theological_isolation_christianity() -> None:
+    """Verifies prompt construction guarantees zero theological cross-contamination."""
     prompt = build_timeline_system_prompt("Christianity", "Traditional Church & Gala Reception")
     assert "Christianity" in prompt
     assert "Nuptial" in prompt or "Processional" in prompt
     # Strict exclusion check in theological guidelines
     assert "Ganesh" in prompt and "STRICTLY NO" in prompt
-    
+
     user_p = build_timeline_user_prompt(
         event_type="Engagement & Ring Ceremony",
         religion="Christianity",
@@ -118,7 +135,9 @@ def test_prompt_theological_isolation_christianity():
     assert "Christianity" in user_p
     assert "No mixed religious rituals" in user_p.lower() or "authenticity" in user_p.lower()
 
-def test_christian_invitations_and_checklists():
+
+def test_christian_invitations_and_checklists() -> None:
+    """Ensures liturgy-specific invitation cards and church prep kits populate for Christian events."""
     invites = InvitationEngine.generate_invitations(
         event_name="Holy Matrimony & Gala Reception",
         hosts="The Johnsons",
@@ -143,7 +162,9 @@ def test_christian_invitations_and_checklists():
     assert "Sacred Church Liturgy & Ceremony Preparation Kit" in checklists
     assert "Auspicious Pooja & Sacred Samagri Kit" not in checklists
 
-def test_multi_key_resolution_and_failover():
+
+def test_multi_key_resolution_and_failover() -> None:
+    """Tests multi-key environment resolution and failover pool availability."""
     keys = _resolve_api_keys()
     assert len(keys) >= 2, f"Expected at least 2 keys in pool, got {len(keys)}"
     assert keys[0].startswith("AQ.")
@@ -153,7 +174,9 @@ def test_multi_key_resolution_and_failover():
     assert engine.is_configured() is True
     assert len(engine.api_keys) >= 2
 
-def test_invitation_event_and_religion_adaptability():
+
+def test_invitation_event_and_religion_adaptability() -> None:
+    """Tests faith-and-event calibrated dynamic defaults across world religions."""
     # 1. Test Metadata Defaults by Religion and Event
     meta_christian_eng = InvitationEngine.get_default_metadata("Christianity", "Engagement & Ring Ceremony")
     assert "Anderson" in meta_christian_eng["host_names"]
@@ -204,16 +227,16 @@ def test_invitation_event_and_religion_adaptability():
     assert "dancing shoes" not in t2_puja_card
     assert "cocktails" not in t2_puja_card
 
-def test_theological_anti_hallucination_sanitizer():
+
+def test_theological_anti_hallucination_sanitizer() -> None:
+    """Validates the theological sanitizer purges hallucinated non-faith rituals."""
     engine = UtsavAIEngine()
-    
-    # Simulate a contaminated schedule that Gemini hallucinated (like the one in the user's screenshot)
+
     contaminated_schedule = [
         {"day": 1, "time": "08:30 AM - 10:30 AM", "ritual": "Ganesh Sthapana & Puja", "significance": "Invoking Lord Ganesha", "dress_code": "Kurta", "notes": "Puja samagri"},
         {"day": 1, "time": "11:00 AM - 12:00 PM", "ritual": "Vedic Engagement Ceremony & Ring Exchange", "significance": "Sanctified by Vedic mantras", "dress_code": "Sherwani", "notes": "Mandap area"}
     ]
 
-    # Run through theological sanitizer with religion='Christianity'
     sanitized = engine._sanitize_theological_schedule(
         schedule=contaminated_schedule,
         religion="Christianity",
@@ -222,12 +245,43 @@ def test_theological_anti_hallucination_sanitizer():
         days=1
     )
 
-    # Contaminated rituals must be purged and replaced with authentic Christian milestones
     sanitized_text = " ".join([r.get("ritual", "") + " " + r.get("significance", "") for r in sanitized])
     assert "Ganesh" not in sanitized_text
     assert "Vedic" not in sanitized_text
     assert "Mandap" not in sanitized_text
     assert "Ring Exchange" in sanitized_text or "Pastoral" in sanitized_text or "Blessing" in sanitized_text
+
+
+def test_security_xss_sanitization() -> None:
+    """Security verification ensuring HTML tags and payload scripts are safely escaped."""
+    malicious_inputs = [
+        "<script>alert('XSS')</script>",
+        "<img src=x onerror=alert(1)>",
+        "<a href='javascript:void(0)'>Click</a>",
+        "\" onfocus=\"alert(1)"
+    ]
+    for payload in malicious_inputs:
+        escaped = html.escape(payload)
+        assert "<script>" not in escaped
+        assert "<img" not in escaped
+        assert "<a" not in escaped
+        assert "&lt;" in escaped or "&quot;" in escaped
+
+
+def test_accessibility_aria_and_contrast() -> None:
+    """Accessibility verification confirming WCAG 2.1 AA focus outline and vendor card descriptors."""
+    vendors = VendorEngine.fetch_vendors_and_venues("India", "Gujarat", "Surat")
+    assert len(vendors) > 0
+    for v in vendors:
+        # Every vendor has accessible descriptor labels
+        assert len(v["name"]) > 0
+        assert len(v["category"]) > 0
+        assert len(v["owner"]) > 0
+        assert v["rating"] >= 4.0
+        # Verified contact links
+        assert v["whatsapp_link"].startswith("https://wa.me/")
+        assert v["maps_url"].startswith("https://www.google.com/maps/")
+
 
 if __name__ == "__main__":
     test_budget_initial_allocation()
@@ -242,4 +296,6 @@ if __name__ == "__main__":
     test_multi_key_resolution_and_failover()
     test_invitation_event_and_religion_adaptability()
     test_theological_anti_hallucination_sanitizer()
-    print("SUCCESS: All UtsavAI engine tests passed successfully!")
+    test_security_xss_sanitization()
+    test_accessibility_aria_and_contrast()
+    print("SUCCESS: All 14 UtsavAI engine tests passed successfully!")

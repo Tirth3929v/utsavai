@@ -6,6 +6,8 @@ Built with Streamlit, Plotly, and Google Gemini Orchestration.
 import os
 import json
 import datetime
+import html
+from typing import Dict, Any, List, Optional
 import pandas as pd
 import streamlit as st
 import plotly.express as px
@@ -214,6 +216,26 @@ CUSTOM_CSS = """
         color: #FFD166 !important;
         border-bottom: 3px solid #D4AF37 !important;
     }
+
+    /* WCAG 2.1 AA Accessibility: Focus Visible, Touch Targets & Screen Readers */
+    *:focus-visible {
+        outline: 2px solid #D4AF37 !important;
+        outline-offset: 2px !important;
+    }
+    button, [role="button"], a {
+        touch-action: manipulation;
+    }
+    .sr-only {
+        position: absolute;
+        width: 1px;
+        height: 1px;
+        padding: 0;
+        margin: -1px;
+        overflow: hidden;
+        clip: rect(0, 0, 0, 0);
+        white-space: nowrap;
+        border: 0;
+    }
 </style>
 """
 st.markdown(CUSTOM_CSS, unsafe_allow_html=True)
@@ -222,6 +244,11 @@ st.markdown(CUSTOM_CSS, unsafe_allow_html=True)
 # ---------------------------------------------------------
 # Session State Initialization & Resilient Helpers
 # ---------------------------------------------------------
+def safe_text(val: Any) -> str:
+    """Safely HTML-escape dynamic text values to prevent XSS (CWE-79) vulnerabilities."""
+    if val is None:
+        return ""
+    return html.escape(str(val))
 def get_safe_invitation_metadata(
     religion: str = "Hinduism",
     event_type: str = "Grand Wedding",
@@ -303,7 +330,7 @@ def get_safe_invitation_metadata(
             "rsvp_contact": "rsvp@aaravandananya.com / +91 98765 43210"
         }
 
-def initialize_state():
+def initialize_state() -> None:
     if "selected_religion" not in st.session_state:
         st.session_state.selected_religion = "Hinduism"
     if "event_type" not in st.session_state:
@@ -417,7 +444,8 @@ with st.sidebar:
     selected_religion = st.selectbox(
         "Faith & Religion Tradition",
         religions_list,
-        index=religions_list.index(st.session_state.selected_religion) if st.session_state.selected_religion in religions_list else 0
+        index=religions_list.index(st.session_state.selected_religion) if st.session_state.selected_religion in religions_list else 0,
+        help="Select world faith or religious tradition for liturgical authenticity"
     )
     st.session_state.selected_religion = selected_religion
 
@@ -428,13 +456,15 @@ with st.sidebar:
     selected_tradition = st.selectbox(
         "Sub-Tradition / Ceremony Style",
         sub_trad_names,
-        index=0 if st.session_state.tradition not in sub_trad_names else sub_trad_names.index(st.session_state.tradition)
+        index=0 if st.session_state.tradition not in sub_trad_names else sub_trad_names.index(st.session_state.tradition),
+        help="Choose specific regional, cultural, or denominational ceremonial style"
     )
 
     selected_event = st.selectbox(
         "Event Type",
         EVENT_TYPES,
-        index=EVENT_TYPES.index(st.session_state.event_type) if st.session_state.event_type in EVENT_TYPES else 0
+        index=EVENT_TYPES.index(st.session_state.event_type) if st.session_state.event_type in EVENT_TYPES else 0,
+        help="Select the scale and type of milestone celebration"
     )
 
     # Global Location Selector
@@ -443,7 +473,8 @@ with st.sidebar:
     sel_country = st.selectbox(
         "Country",
         c_list,
-        index=c_list.index(st.session_state.selected_country) if st.session_state.selected_country in c_list else 0
+        index=c_list.index(st.session_state.selected_country) if st.session_state.selected_country in c_list else 0,
+        help="Select destination country for statutory regulations and vendor ecosystem"
     )
     st.session_state.selected_country = sel_country
 
@@ -451,7 +482,8 @@ with st.sidebar:
     sel_state = st.selectbox(
         "State / Province",
         s_list,
-        index=s_list.index(st.session_state.selected_state) if st.session_state.selected_state in s_list else 0
+        index=s_list.index(st.session_state.selected_state) if st.session_state.selected_state in s_list else 0,
+        help="Select state or province for local administrative guidelines"
     )
     st.session_state.selected_state = sel_state
 
@@ -459,7 +491,8 @@ with st.sidebar:
     sel_city = st.selectbox(
         "City",
         city_list,
-        index=city_list.index(st.session_state.selected_city) if st.session_state.selected_city in city_list else 0
+        index=city_list.index(st.session_state.selected_city) if st.session_state.selected_city in city_list else 0,
+        help="Select destination city for localized vendor directory and map queries"
     )
     st.session_state.selected_city = sel_city
 
@@ -496,7 +529,7 @@ with st.sidebar:
 
     col_cur, col_bud = st.columns([1, 2.5])
     with col_cur:
-        currency = st.selectbox("Currency", ["₹", "$", "£", "AED"], index=0)
+        currency = st.selectbox("Currency", ["₹", "$", "£", "AED"], index=0, help="Select currency symbol for all financial calculations")
     with col_bud:
         default_val = float(st.session_state.total_budget) if currency == "₹" else 50000.0
         step_val = 50000.0 if currency == "₹" else 1000.0
@@ -505,24 +538,25 @@ with st.sidebar:
             min_value=1000.0,
             value=default_val,
             step=step_val,
-            format="%.0f"
+            format="%.0f",
+            help="Set total capital allocation across venue, catering, decor, and vendors"
         )
 
     col_g, col_d = st.columns(2)
     with col_g:
-        guest_count = st.number_input("Guests", min_value=10, max_value=5000, value=st.session_state.guest_count, step=25)
+        guest_count = st.number_input("Guests", min_value=10, max_value=5000, value=st.session_state.guest_count, step=25, help="Estimated total guest headcount across all days")
     with col_d:
-        event_duration = st.slider("Duration (Days)", min_value=1, max_value=5, value=st.session_state.event_duration)
+        event_duration = st.slider("Duration (Days)", min_value=1, max_value=5, value=st.session_state.event_duration, help="Number of celebration days")
 
-    start_date = st.date_input("Commencement Date", value=st.session_state.start_date)
+    start_date = st.date_input("Commencement Date", value=st.session_state.start_date, help="Target start date for the ceremonies")
 
     with st.expander("🎨 Hospitality & Venue Nuances", expanded=False):
-        venue_type = st.selectbox("Venue Style", VENUE_TYPES, index=0)
-        dietary = st.selectbox("Culinary Directive", DIETARY_PREFERENCES, index=0)
-        custom_notes = st.text_input("Special Traditions / Notes", placeholder="e.g. Include morning Anand Karaj / Sangeet garba fusion")
+        venue_type = st.selectbox("Venue Style", VENUE_TYPES, index=0, help="Preferred architectural ambiance")
+        dietary = st.selectbox("Culinary Directive", DIETARY_PREFERENCES, index=0, help="Primary dietary regulations and catering guidelines")
+        custom_notes = st.text_input("Special Traditions / Notes", placeholder="e.g. Include morning Anand Karaj / Sangeet garba fusion", help="Custom family priorities, interfaith elements, or unique traditions")
 
     st.markdown("<br>", unsafe_allow_html=True)
-    architect_btn = st.button("✨ Architect Master Plan", type="primary", use_container_width=True)
+    architect_btn = st.button("✨ Architect Master Plan", type="primary", use_container_width=True, help="Compute full architectural itinerary, budget splits, tasks, and invitations")
 
     if architect_btn:
         st.session_state.event_type = selected_event
@@ -590,17 +624,17 @@ days = st.session_state.event_duration
 cost_per_guest = (total_b / guests) if guests > 0 else 0
 
 st.markdown(f"""
-    <div class="hero-card">
-        <div class="hero-title">UtsavAI – {st.session_state.event_type}</div>
+    <div class="hero-card" role="region" aria-label="Event Master Overview">
+        <div class="hero-title">UtsavAI – {safe_text(st.session_state.event_type)}</div>
         <div class="hero-subtitle">
-            Curating sacred muhurats, culturally authentic vidhis, dynamic financial balance, and tailored hospitality.
+            Curating sacred ceremonies, culturally authentic traditions, dynamic financial balance, and tailored hospitality.
         </div>
         <div>
-            <span class="pill-badge">🪔 Tradition: {st.session_state.tradition}</span>
+            <span class="pill-badge">🪔 Tradition: {safe_text(st.session_state.tradition)}</span>
             <span class="pill-badge">👥 Scale: {guests:,} Guests</span>
             <span class="pill-badge">📅 Duration: {days} Days</span>
-            <span class="pill-badge">🏰 Venue: {st.session_state.venue_type}</span>
-            <span class="pill-badge">🍲 Culinary: {st.session_state.dietary.split('(')[0].strip()}</span>
+            <span class="pill-badge">🏰 Venue: {safe_text(st.session_state.venue_type)}</span>
+            <span class="pill-badge">🍲 Culinary: {safe_text(st.session_state.dietary.split('(')[0].strip())}</span>
         </div>
     </div>
 """, unsafe_allow_html=True)
@@ -735,13 +769,13 @@ with tab_itinerary:
 
         for rit in day_rituals:
             st.markdown(f"""
-                <div class="timeline-card">
-                    <div class="timeline-time">⏰ {rit.get('time', 'TBD')} {('• ' + rit.get('phase')) if rit.get('phase') else ''}</div>
-                    <div class="timeline-title">{rit.get('ritual', 'Ceremony')}</div>
-                    <div class="timeline-body">{rit.get('significance', '')}</div>
+                <div class="timeline-card" role="article" aria-label="{safe_text(rit.get('ritual', 'Ceremony'))}">
+                    <div class="timeline-time">⏰ {safe_text(rit.get('time', 'TBD'))} {('• ' + safe_text(rit.get('phase'))) if rit.get('phase') else ''}</div>
+                    <div class="timeline-title">{safe_text(rit.get('ritual', 'Ceremony'))}</div>
+                    <div class="timeline-body">{safe_text(rit.get('significance', ''))}</div>
                     <div style="margin-top: 10px;">
-                        <span class="tag-dress">👗 <b>Attire Vibe:</b> {rit.get('dress_code', 'Traditional Festive')}</span>
-                        <span class="tag-notes" style="margin-left: 8px;">📌 <b>Operational Note:</b> {rit.get('operational_notes', rit.get('notes', 'Coordinate with priest and audio'))}</span>
+                        <span class="tag-dress">👗 <b>Attire Vibe:</b> {safe_text(rit.get('dress_code', 'Traditional Festive'))}</span>
+                        <span class="tag-notes" style="margin-left: 8px;">📌 <b>Operational Note:</b> {safe_text(rit.get('operational_notes', rit.get('notes', 'Coordinate with vendors')))}</span>
                     </div>
                 </div>
             """, unsafe_allow_html=True)
@@ -997,11 +1031,11 @@ with tab_budget:
     for i, m in enumerate(milestones):
         with mcols[i]:
             st.markdown(f"""
-                <div class="metric-card" style="text-align: left;">
-                    <div style="font-weight: 700; color: #D4AF37; font-size: 0.95rem;">{m['milestone']}</div>
-                    <div style="font-size: 0.8rem; color: #94A3B8; margin-bottom: 6px;">{m['timing']}</div>
+                <div class="metric-card" role="group" aria-label="Cashflow Milestone" style="text-align: left;">
+                    <div style="font-weight: 700; color: #D4AF37; font-size: 0.95rem;">{safe_text(m['milestone'])}</div>
+                    <div style="font-size: 0.8rem; color: #94A3B8; margin-bottom: 6px;">{safe_text(m['timing'])}</div>
                     <div class="metric-val" style="font-size: 1.3rem;">{curr}{m['amount']:,.0f}</div>
-                    <div style="font-size: 0.78rem; color: #E2E8F0; margin-top: 6px;">{m['purpose']}</div>
+                    <div style="font-size: 0.78rem; color: #E2E8F0; margin-top: 6px;">{safe_text(m['purpose'])}</div>
                 </div>
             """, unsafe_allow_html=True)
 
@@ -1045,9 +1079,9 @@ with tab_checklists:
                         st.markdown(f"""
                             <div style="text-align: right; margin-top: 5px;">
                                 <span style="background: rgba(212,175,55,0.15); color: {crit_color}; border: 1px solid {crit_color}; padding: 3px 8px; border-radius: 8px; font-size: 0.75rem; font-weight: 700;">
-                                    {t.get('criticality', 'Normal')}
+                                    {safe_text(t.get('criticality', 'Normal'))}
                                 </span>
-                                <div style="font-size: 0.8rem; color: #94A3B8; margin-top: 4px;">Deadline: <b>{t['deadline']}</b></div>
+                                <div style="font-size: 0.8rem; color: #94A3B8; margin-top: 4px;">Deadline: <b>{safe_text(t['deadline'])}</b></div>
                             </div>
                         """, unsafe_allow_html=True)
                     st.markdown("<hr style='margin: 8px 0; border-color: #1F2438;'>", unsafe_allow_html=True)
@@ -1057,22 +1091,23 @@ with tab_checklists:
         st.caption("Pre-calibrated failover runbooks to safeguard the celebration against severe disruptions.")
 
         for c in crisis_protocols:
+            immediate_steps_html = "".join([f"<div style='font-size: 0.82rem; color: #CBD5E1;'>• {safe_text(step)}</div>" for step in c.get('immediate_steps', [])])
             st.markdown(f"""
-                <div class="crisis-card">
+                <div class="crisis-card" role="alert" aria-label="Crisis Contingency Protocol">
                     <div style="display: flex; justify-content: space-between; align-items: center;">
-                        <span style="font-size: 1.1rem; font-weight: 700; color: #FFFFFF;">{c['risk']}</span>
+                        <span style="font-size: 1.1rem; font-weight: 700; color: #FFFFFF;">{safe_text(c['risk'])}</span>
                         <span style="background: rgba(239, 71, 111, 0.2); color: #FF7096; border: 1px solid #EF476F; padding: 2px 10px; border-radius: 12px; font-size: 0.75rem; font-weight: 700;">
-                            {c['severity']}
+                            {safe_text(c['severity'])}
                         </span>
                     </div>
-                    <div style="color: #FFB703; font-size: 0.85rem; margin: 6px 0;"><b>Trigger Indicator:</b> {c['trigger_indicator']}</div>
-                    <div style="color: #E2E8F0; font-size: 0.92rem; margin-bottom: 8px;"><b>Mitigation Protocol:</b> {c['mitigation_protocol']}</div>
+                    <div style="color: #FFB703; font-size: 0.85rem; margin: 6px 0;"><b>Trigger Indicator:</b> {safe_text(c['trigger_indicator'])}</div>
+                    <div style="color: #E2E8F0; font-size: 0.92rem; margin-bottom: 8px;"><b>Mitigation Protocol:</b> {safe_text(c['mitigation_protocol'])}</div>
                     <div style="background: #111424; padding: 10px 14px; border-radius: 8px; margin-top: 8px;">
                         <div style="font-size: 0.82rem; color: #D4AF37; font-weight: 600; margin-bottom: 4px;">⚡ Immediate Action Cues:</div>
-                        {"".join([f"<div style='font-size: 0.82rem; color: #CBD5E1;'>• {step}</div>" for step in c['immediate_steps']])}
+                        {immediate_steps_html}
                     </div>
                     <div style="font-size: 0.8rem; color: #94A3B8; margin-top: 8px;">
-                        👤 <b>Command Officer / Lead:</b> <span style="color: #F8FAFC;">{c['lead_poc']}</span>
+                        👤 <b>Command Officer / Lead:</b> <span style="color: #F8FAFC;">{safe_text(c['lead_poc'])}</span>
                     </div>
                 </div>
             """, unsafe_allow_html=True)
@@ -1116,21 +1151,21 @@ with tab_invitations:
 
     with c_t1:
         st.markdown(f"""
-            <div class="metric-card">
+            <div class="metric-card" role="group" aria-label="Tier 1 Guest Count">
                 <div class="metric-val">~{t1_guests}</div>
                 <div class="metric-lbl">Tier 1: Sacred Family & Elders (20%)</div>
             </div>
         """, unsafe_allow_html=True)
     with c_t2:
         st.markdown(f"""
-            <div class="metric-card">
+            <div class="metric-card" role="group" aria-label="Tier 2 Guest Count">
                 <div class="metric-val">~{t2_guests}</div>
                 <div class="metric-lbl">Tier 2: Friends & Entourage (45%)</div>
             </div>
         """, unsafe_allow_html=True)
     with c_t3:
         st.markdown(f"""
-            <div class="metric-card">
+            <div class="metric-card" role="group" aria-label="Tier 3 Guest Count">
                 <div class="metric-val">~{t3_guests}</div>
                 <div class="metric-lbl">Tier 3: Network & Community (35%)</div>
             </div>
@@ -1141,9 +1176,9 @@ with tab_invitations:
     # Action Toolbar: Gemini AI Generation + Customization
     col_act1, col_act2, col_act3 = st.columns([2, 1.4, 1.2])
     with col_act1:
-        ai_invite_btn = st.button("✨ AI Personalize Invitations (Gemini)", type="primary", use_container_width=True)
+        ai_invite_btn = st.button("✨ AI Personalize Invitations (Gemini)", type="primary", use_container_width=True, help="Craft customized 3-tier invitations using Google Gemini AI")
     with col_act2:
-        reset_defaults_btn = st.button("🔄 Auto-Fill Faith Defaults", use_container_width=True)
+        reset_defaults_btn = st.button("🔄 Auto-Fill Faith Defaults", use_container_width=True, help="Auto-populate culturally appropriate host, honoree, and venue defaults")
     with col_act3:
         if "ai_invitations" in st.session_state and st.session_state.ai_invitations:
             st.markdown('<div style="text-align: right; padding-top: 6px;"><span class="pill-badge" style="background: rgba(16, 185, 129, 0.2); border-color: #10B981; color: #6EE7B7;">🤖 Gemini AI Active</span></div>', unsafe_allow_html=True)
@@ -1312,47 +1347,52 @@ with tab_directory:
         with st.container(border=True):
             col_v1, col_v2 = st.columns([1, 2.3])
             with col_v1:
-                st.image(v["photo"], use_container_width=True)
+                st.image(
+                    v["photo"],
+                    caption=f"{safe_text(v['name'])} – {safe_text(v['category'])}",
+                    use_container_width=True,
+                    output_format="JPEG"
+                )
                 st.markdown(f"""
                     <div style="text-align: center; margin-top: 8px;">
                         <span style="background: rgba(16, 185, 129, 0.15); color: #10B981; border: 1px solid #10B981; padding: 2px 8px; border-radius: 6px; font-size: 0.78rem; font-weight: 700;">
                             ✓ Verified Partner
                         </span>
                         <div style="color: #FFB703; font-weight: 700; font-size: 0.92rem; margin-top: 4px;">
-                            ★ {v['rating']} <span style="color: #94A3B8; font-weight: 400; font-size: 0.8rem;">({v['reviews_count']} reviews)</span>
+                            ★ {safe_text(v['rating'])} <span style="color: #94A3B8; font-weight: 400; font-size: 0.8rem;">({safe_text(v['reviews_count'])} reviews)</span>
                         </div>
                     </div>
                 """, unsafe_allow_html=True)
             with col_v2:
-                st.markdown(f"### {v['name']}")
-                st.markdown(f"**🏷️ Role / Category:** `{v['category']}` &nbsp;|&nbsp; **👤 Owner / Contact:** **{v['owner']}** *({v['role_title']})*")
+                st.markdown(f"### {safe_text(v['name'])}")
+                st.markdown(f"**🏷️ Role / Category:** `{safe_text(v['category'])}` &nbsp;|&nbsp; **👤 Owner / Contact:** **{safe_text(v['owner'])}** *({safe_text(v['role_title'])})*")
                 
                 # Pricing & Spend Highlight
                 st.markdown(f"""
                     <div style="background: #171B2E; border-left: 3px solid #D4AF37; padding: 8px 14px; border-radius: 0 8px 8px 0; margin: 10px 0;">
                         <span style="color: #94A3B8; font-size: 0.82rem; text-transform: uppercase; letter-spacing: 0.5px;">Required Occasion Spend / Budget:</span><br/>
-                        <span style="color: #FFD166; font-size: 1.25rem; font-weight: 700; font-family: 'Cinzel', serif;">{v['estimated_spend']}</span>
-                        <span style="color: #CBD5E1; font-size: 0.85rem;"> • {v['pricing_unit']}</span>
+                        <span style="color: #FFD166; font-size: 1.25rem; font-weight: 700; font-family: 'Cinzel', serif;">{safe_text(v['estimated_spend'])}</span>
+                        <span style="color: #CBD5E1; font-size: 0.85rem;"> • {safe_text(v['pricing_unit'])}</span>
                     </div>
                 """, unsafe_allow_html=True)
 
-                st.markdown(f"🏆 **Verified Track Record:** {v['projects_completed']}")
-                st.markdown(f"📍 **Address / Location:** {v['address']}")
+                st.markdown(f"🏆 **Verified Track Record:** {safe_text(v['projects_completed'])}")
+                st.markdown(f"📍 **Address / Location:** {safe_text(v['address'])}")
                 
                 # Specialties pills
-                specialty_html = " ".join([f"<span class='pill-badge' style='font-size: 0.75rem; padding: 2px 8px;'>✨ {spec}</span>" for spec in v.get("specialties", [])])
+                specialty_html = " ".join([f"<span class='pill-badge' style='font-size: 0.75rem; padding: 2px 8px;'>✨ {safe_text(spec)}</span>" for spec in v.get("specialties", [])])
                 st.markdown(f"<div style='margin-bottom: 12px;'>{specialty_html}</div>", unsafe_allow_html=True)
 
-                # Direct Connection Action Buttons
+                # Direct Connection Action Buttons with Accessible Labels
                 b_c1, b_c2, b_c3, b_c4 = st.columns(4)
                 with b_c1:
-                    st.link_button("📞 Call Direct", v["call_link"], use_container_width=True)
+                    st.link_button("📞 Call Direct", v["call_link"], use_container_width=True, help=f"Direct phone call to {safe_text(v['owner'])}")
                 with b_c2:
-                    st.link_button("💬 Chat WhatsApp", v["whatsapp_link"], use_container_width=True)
+                    st.link_button("💬 Chat WhatsApp", v["whatsapp_link"], use_container_width=True, help=f"Open instant WhatsApp conversation with {safe_text(v['owner'])}")
                 with b_c3:
-                    st.link_button("📍 Google Maps", v["maps_url"], use_container_width=True)
+                    st.link_button("📍 Google Maps", v["maps_url"], use_container_width=True, help=f"View verified coordinates and directions for {safe_text(v['name'])}")
                 with b_c4:
-                    st.link_button("✉️ Email Direct", f"mailto:{v['email']}", use_container_width=True)
+                    st.link_button("✉️ Email Direct", f"mailto:{v['email']}", use_container_width=True, help=f"Compose official email inquiry to {safe_text(v['email'])}")
 
 
 # ---------------------------------------------------------

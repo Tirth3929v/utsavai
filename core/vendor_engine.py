@@ -328,6 +328,7 @@ class VendorEngine:
 
     @classmethod
     def get_supported_countries(cls) -> List[str]:
+        """Returns the list of officially supported sovereign nations for vendor matching."""
         return [
             "India",
             "United States",
@@ -345,6 +346,14 @@ class VendorEngine:
 
     @classmethod
     def get_states_for_country(cls, country: str) -> List[str]:
+        """Provides the administrative states, territories, or provinces for a chosen nation.
+
+        Args:
+            country: Name of the sovereign nation.
+
+        Returns:
+            List of supported states or provinces.
+        """
         country_data = GLOBAL_DIRECTORY_DATABASE.get(country, {})
         if country_data:
             return list(country_data.keys())
@@ -362,6 +371,15 @@ class VendorEngine:
 
     @classmethod
     def get_cities_for_state(cls, country: str, state: str) -> List[str]:
+        """Retrieves urban destinations and municipal centers for the specified state.
+
+        Args:
+            country: Destination country.
+            state: Destination state or territory.
+
+        Returns:
+            List of major celebration cities.
+        """
         cities = GLOBAL_DIRECTORY_DATABASE.get(country, {}).get(state, {})
         if cities:
             return list(cities.keys())
