@@ -38,3 +38,4 @@ If you discover a potential security vulnerability within UtsavAI, please report
 1. **Email:** Send details to `security@utsavai.org` or open a private GitHub Security Advisory.
 2. **Response SLA:** We acknowledge receipt within **24 hours** and provide a patch timeline within **72 hours**.
 3. **Disclosure:** Please refrain from publicly disclosing issues until an official patch has been published.
+

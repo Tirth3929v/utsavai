@@ -51,3 +51,4 @@ python tests/test_smoke.py
 - Use **Type Annotations** (`typing.Dict`, `typing.List`, `typing.Optional`) on all function signatures.
 - Provide clear **PEP 257** docstrings (`Args:`, `Returns:`, `Raises:`) on all public classes and methods.
 - Commit messages should adhere to the [Conventional Commits](https://www.conventionalcommits.org/) specification (`feat:`, `fix:`, `docs:`, `test:`, `refactor:`).
+
