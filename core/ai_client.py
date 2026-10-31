@@ -36,8 +36,12 @@ from core.prompts import (
     CRISIS_DEPENDENCY_SYSTEM_PROMPT,
     CRISIS_USER_TEMPLATE,
     build_timeline_system_prompt,
-    build_timeline_user_prompt
+    build_timeline_user_prompt,
+    build_invitation_system_prompt,
+    build_invitation_user_prompt
 )
+from core.invitation_engine import InvitationEngine
+from config.global_traditions import GLOBAL_RELIGIONS
 
 
 def _resolve_api_keys(explicit_key: Optional[str] = None) -> List[str]:
@@ -190,6 +194,62 @@ class UtsavAIEngine:
                 continue
         return None
 
+    def _sanitize_theological_schedule(
+        self,
+        schedule: List[Dict[str, Any]],
+        religion: str,
+        event_type: str,
+        tradition: str,
+        days: int = 1
+    ) -> List[Dict[str, Any]]:
+        """
+        Guarantees 100% theological isolation.
+        If non-Hinduism religion is selected and Vedic/Hindu rituals are detected,
+        replaces the schedule with authentic presets for that faith and event.
+        """
+        rel_lower = (religion or "Hinduism").lower()
+        if "hindu" in rel_lower:
+            return schedule
+
+        banned_terms = [
+            "ganesh", "puja", "pooja", "vedic", "muhurat", "mandap", "phera",
+            "pheray", "haldi", "pithi", "sangeet", "havan", "kanyadaan", "saptapadi",
+            "baraat", "garba", "vidhi", "pandit", "agnihotra", "mangalphera", "dholak"
+        ]
+
+        contaminated = False
+        for item in schedule:
+            text = f"{item.get('ritual', '')} {item.get('significance', '')} {item.get('phase', '')}".lower()
+            if any(bt in text for bt in banned_terms):
+                contaminated = True
+                break
+
+        if not contaminated:
+            return schedule
+
+        # Contamination detected: fetch authentic faith preset
+        sub_trads = GLOBAL_RELIGIONS.get(religion, {}).get("sub_traditions", {})
+        chosen_rituals = []
+        evt_lower = (event_type or "").lower()
+
+        for sub_name, sub_meta in sub_trads.items():
+            s_low = sub_name.lower()
+            if ("engagement" in evt_lower and "engagement" in s_low) or \
+               ("anniversary" in evt_lower and "anniversary" in s_low) or \
+               ("matrimony" in evt_lower or "wedding" in evt_lower):
+                chosen_rituals = sub_meta.get("rituals", [])
+                break
+
+        if not chosen_rituals and sub_trads:
+            first_key = next(iter(sub_trads.keys()))
+            chosen_rituals = sub_trads[first_key].get("rituals", [])
+
+        if chosen_rituals:
+            filtered = [r for r in chosen_rituals if r.get("day", 1) <= days]
+            return filtered if filtered else chosen_rituals
+
+        return schedule
+
     def generate_custom_itinerary(
         self,
         event_type: str,
@@ -203,11 +263,16 @@ class UtsavAIEngine:
         sub_tradition: str = ""
     ) -> Dict[str, Any]:
         """Module 1: Generates an AI-powered day-by-day ritual timeline strictly honoring the chosen religion."""
-        if not self.is_configured():
-            return {"source": "preset", "message": "Using calibrated cultural knowledge-base."}
-
         active_tradition = sub_tradition if sub_tradition else tradition
-        system_prompt = build_timeline_system_prompt(religion=religion, tradition=active_tradition)
+
+        if not self.is_configured():
+            # Local preset resolution with duration filtering
+            sub_trads = GLOBAL_RELIGIONS.get(religion, {}).get("sub_traditions", {})
+            rituals = sub_trads.get(active_tradition, {}).get("rituals", [])
+            filtered = [r for r in rituals if r.get("day", 1) <= days] if any(r.get("day", 1) <= days for r in rituals) else rituals
+            return {"source": "preset", "schedule": filtered, "message": "Using calibrated cultural knowledge-base."}
+
+        system_prompt = build_timeline_system_prompt(religion=religion, tradition=active_tradition, event_type=event_type)
         user_prompt = build_timeline_user_prompt(
             event_type=event_type,
             religion=religion,
@@ -222,14 +287,108 @@ class UtsavAIEngine:
         try:
             raw_text = self._execute_gemini_call(system_prompt, user_prompt, temperature=0.3)
             if not raw_text:
-                return {"source": "preset"}
+                sub_trads = GLOBAL_RELIGIONS.get(religion, {}).get("sub_traditions", {})
+                rituals = sub_trads.get(active_tradition, {}).get("rituals", [])
+                filtered = [r for r in rituals if r.get("day", 1) <= days] if any(r.get("day", 1) <= days for r in rituals) else rituals
+                return {"source": "preset", "schedule": filtered}
 
             cleaned = self._clean_json_text(raw_text)
             data = json.loads(cleaned)
+            
+            # Apply theological guardrail & sanitizer
+            if "schedule" in data and isinstance(data["schedule"], list):
+                data["schedule"] = self._sanitize_theological_schedule(
+                    data["schedule"],
+                    religion=religion,
+                    event_type=event_type,
+                    tradition=active_tradition,
+                    days=days
+                )
             data["source"] = "gemini"
             return data
         except Exception as e:
-            return {"source": "preset", "error": str(e)}
+            sub_trads = GLOBAL_RELIGIONS.get(religion, {}).get("sub_traditions", {})
+            rituals = sub_trads.get(active_tradition, {}).get("rituals", [])
+            filtered = [r for r in rituals if r.get("day", 1) <= days] if any(r.get("day", 1) <= days for r in rituals) else rituals
+            return {"source": "preset", "schedule": filtered, "error": str(e)}
+
+    def generate_ai_invitations(
+        self,
+        event_name: str,
+        hosts: str,
+        honorees: str,
+        tradition: str,
+        venue: str,
+        dates: str,
+        rsvp_contact: str,
+        religion: str = "Christianity"
+    ) -> Dict[str, Dict[str, str]]:
+        """
+        Generates culturally personalized multi-tier invitations using Gemini with failover
+        and deterministic fallback to InvitationEngine.
+        """
+        fallback_invites = InvitationEngine.generate_invitations(
+            event_name=event_name,
+            hosts=hosts,
+            honorees=honorees,
+            tradition=tradition,
+            venue=venue,
+            dates=dates,
+            rsvp_contact=rsvp_contact,
+            religion=religion
+        )
+
+        if not self.is_configured():
+            return fallback_invites
+
+        system_prompt = build_invitation_system_prompt(religion=religion, event_type=event_name)
+        user_prompt = build_invitation_user_prompt(
+            event_name=event_name,
+            hosts=hosts,
+            honorees=honorees,
+            tradition=tradition,
+            venue=venue,
+            dates=dates,
+            rsvp_contact=rsvp_contact,
+            religion=religion
+        )
+
+        try:
+            raw_text = self._execute_gemini_call(system_prompt, user_prompt, temperature=0.3)
+            if not raw_text:
+                return fallback_invites
+
+            cleaned = self._clean_json_text(raw_text)
+            ai_data = json.loads(cleaned)
+
+            required_tiers = [
+                "Tier 1: Elders & Sacred Family Circle",
+                "Tier 2: Close Friends & Celebration Circle",
+                "Tier 3: Esteemed Colleagues & Network"
+            ]
+
+            valid = True
+            for tier in required_tiers:
+                if tier not in ai_data:
+                    valid = False
+                    break
+                tier_info = ai_data[tier]
+                if not isinstance(tier_info, dict) or "card_copy" not in tier_info or "whatsapp_copy" not in tier_info:
+                    valid = False
+                    break
+
+            if valid:
+                for k in required_tiers:
+                    ai_data[k]["source"] = "gemini"
+                    if "badge" not in ai_data[k]:
+                        ai_data[k]["badge"] = fallback_invites[k]["badge"]
+                    if "audience" not in ai_data[k]:
+                        ai_data[k]["audience"] = fallback_invites[k]["audience"]
+                return ai_data
+
+            return fallback_invites
+        except Exception:
+            return fallback_invites
 
     def generate_ai_budget(
         self,

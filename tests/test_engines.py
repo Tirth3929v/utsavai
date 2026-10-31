@@ -153,6 +153,82 @@ def test_multi_key_resolution_and_failover():
     assert engine.is_configured() is True
     assert len(engine.api_keys) >= 2
 
+def test_invitation_event_and_religion_adaptability():
+    # 1. Test Metadata Defaults by Religion and Event
+    meta_christian_eng = InvitationEngine.get_default_metadata("Christianity", "Engagement & Ring Ceremony")
+    assert "Anderson" in meta_christian_eng["host_names"]
+    assert "David & Sarah" in meta_christian_eng["honoree_names"]
+
+    meta_islam_anniv = InvitationEngine.get_default_metadata("Islam", "Anniversary / Milestone Gala")
+    assert "Khan" in meta_islam_anniv["host_names"]
+    assert "Tariq & Amina" in meta_islam_anniv["honoree_names"]
+
+    meta_hindu_puja = InvitationEngine.get_default_metadata("Hinduism", "Intimate Sacred Vidhi / Puja")
+    assert "Mehta" in meta_hindu_puja["host_names"]
+    assert "Puja" in meta_hindu_puja["honoree_names"]
+
+    # 2. Test Christian Engagement Invitations
+    invites_eng = InvitationEngine.generate_invitations(
+        event_name="Engagement & Ring Ceremony",
+        hosts=meta_christian_eng["host_names"],
+        honorees=meta_christian_eng["honoree_names"],
+        tradition="Christian Engagement & Ring Ceremony",
+        venue=meta_christian_eng["venue_location"],
+        dates="October 20, 2026",
+        rsvp_contact=meta_christian_eng["rsvp_contact"],
+        religion="Christianity"
+    )
+    t1_card = invites_eng["Tier 1: Elders & Sacred Family Circle"]["card_copy"]
+    assert "Father, and of the Son" in t1_card
+    assert "rings" in t1_card.lower() or "betrothal" in t1_card.lower()
+    assert "Ganesh" not in t1_card
+    assert "Mandap" not in t1_card
+
+    t2_wa = invites_eng["Tier 2: Close Friends & Celebration Circle"]["whatsapp_copy"]
+    assert "RING" in t2_wa or "Engagement" in t2_wa
+    assert "Sangeet" not in t2_wa
+
+    # 3. Test Intimate Sacred Puja Invitations (Must not have party / dancing references)
+    invites_puja = InvitationEngine.generate_invitations(
+        event_name="Intimate Sacred Vidhi / Puja",
+        hosts=meta_hindu_puja["host_names"],
+        honorees=meta_hindu_puja["honoree_names"],
+        tradition="Gujarati Hindu",
+        venue=meta_hindu_puja["venue_location"],
+        dates="November 10, 2026",
+        rsvp_contact=meta_hindu_puja["rsvp_contact"],
+        religion="Hinduism"
+    )
+    t2_puja_card = invites_puja["Tier 2: Close Friends & Celebration Circle"]["card_copy"]
+    assert "Sacred Prayer" in t2_puja_card
+    assert "dancing shoes" not in t2_puja_card
+    assert "cocktails" not in t2_puja_card
+
+def test_theological_anti_hallucination_sanitizer():
+    engine = UtsavAIEngine()
+    
+    # Simulate a contaminated schedule that Gemini hallucinated (like the one in the user's screenshot)
+    contaminated_schedule = [
+        {"day": 1, "time": "08:30 AM - 10:30 AM", "ritual": "Ganesh Sthapana & Puja", "significance": "Invoking Lord Ganesha", "dress_code": "Kurta", "notes": "Puja samagri"},
+        {"day": 1, "time": "11:00 AM - 12:00 PM", "ritual": "Vedic Engagement Ceremony & Ring Exchange", "significance": "Sanctified by Vedic mantras", "dress_code": "Sherwani", "notes": "Mandap area"}
+    ]
+
+    # Run through theological sanitizer with religion='Christianity'
+    sanitized = engine._sanitize_theological_schedule(
+        schedule=contaminated_schedule,
+        religion="Christianity",
+        event_type="Engagement & Ring Ceremony",
+        tradition="Christian Engagement & Ring Ceremony",
+        days=1
+    )
+
+    # Contaminated rituals must be purged and replaced with authentic Christian milestones
+    sanitized_text = " ".join([r.get("ritual", "") + " " + r.get("significance", "") for r in sanitized])
+    assert "Ganesh" not in sanitized_text
+    assert "Vedic" not in sanitized_text
+    assert "Mandap" not in sanitized_text
+    assert "Ring Exchange" in sanitized_text or "Pastoral" in sanitized_text or "Blessing" in sanitized_text
+
 if __name__ == "__main__":
     test_budget_initial_allocation()
     test_budget_rebalancing_proportional()
@@ -164,4 +240,6 @@ if __name__ == "__main__":
     test_prompt_theological_isolation_christianity()
     test_christian_invitations_and_checklists()
     test_multi_key_resolution_and_failover()
+    test_invitation_event_and_religion_adaptability()
+    test_theological_anti_hallucination_sanitizer()
     print("SUCCESS: All UtsavAI engine tests passed successfully!")

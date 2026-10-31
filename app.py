@@ -213,6 +213,8 @@ st.markdown(CUSTOM_CSS, unsafe_allow_html=True)
 # Session State Initialization
 # ---------------------------------------------------------
 def initialize_state():
+    if "selected_religion" not in st.session_state:
+        st.session_state.selected_religion = "Hinduism"
     if "event_type" not in st.session_state:
         st.session_state.event_type = EVENT_TYPES[0]
     if "tradition" not in st.session_state:
@@ -231,22 +233,23 @@ def initialize_state():
         st.session_state.venue_type = VENUE_TYPES[0]
     if "dietary" not in st.session_state:
         st.session_state.dietary = DIETARY_PREFERENCES[0]
-    if "host_names" not in st.session_state:
-        st.session_state.host_names = "The Mehta & Shah Families"
-    if "honoree_names" not in st.session_state:
-        st.session_state.honoree_names = "Aarav & Ananya"
-    if "venue_location" not in st.session_state:
-        st.session_state.venue_location = "Royal Heritage Palace & Resorts, Udaipur"
-    if "rsvp_contact" not in st.session_state:
-        st.session_state.rsvp_contact = "+91 98765 43210 / celebrate@utsavai.com"
-    if "selected_religion" not in st.session_state:
-        st.session_state.selected_religion = "Hinduism"
     if "selected_country" not in st.session_state:
         st.session_state.selected_country = "India"
     if "selected_state" not in st.session_state:
         st.session_state.selected_state = "Gujarat"
     if "selected_city" not in st.session_state:
         st.session_state.selected_city = "Surat"
+
+    # Dynamic faith-and-event calibrated defaults for invitation suite
+    inv_defaults = InvitationEngine.get_default_metadata(st.session_state.selected_religion, st.session_state.event_type)
+    if "host_names" not in st.session_state:
+        st.session_state.host_names = inv_defaults["host_names"]
+    if "honoree_names" not in st.session_state:
+        st.session_state.honoree_names = inv_defaults["honoree_names"]
+    if "venue_location" not in st.session_state:
+        st.session_state.venue_location = inv_defaults["venue_location"]
+    if "rsvp_contact" not in st.session_state:
+        st.session_state.rsvp_contact = inv_defaults["rsvp_contact"]
 
     # Allocations
     if "budget_allocations" not in st.session_state:
@@ -368,6 +371,37 @@ with st.sidebar:
         index=city_list.index(st.session_state.selected_city) if st.session_state.selected_city in city_list else 0
     )
     st.session_state.selected_city = sel_city
+
+    # Dynamic sync of faith & event parameters across state
+    if "current_religion" not in st.session_state:
+        st.session_state.current_religion = selected_religion
+    elif st.session_state.current_religion != selected_religion:
+        st.session_state.current_religion = selected_religion
+        st.session_state.selected_religion = selected_religion
+        st.session_state.tradition = sub_trad_names[0]
+        inv_defaults = InvitationEngine.get_default_metadata(selected_religion, selected_event)
+        st.session_state.host_names = inv_defaults["host_names"]
+        st.session_state.honoree_names = inv_defaults["honoree_names"]
+        st.session_state.venue_location = f"{sel_city}, {sel_state}, {sel_country}"
+        st.session_state.rsvp_contact = inv_defaults["rsvp_contact"]
+        if "ai_invitations" in st.session_state:
+            del st.session_state["ai_invitations"]
+
+    if "current_event" not in st.session_state:
+        st.session_state.current_event = selected_event
+    elif st.session_state.current_event != selected_event:
+        st.session_state.current_event = selected_event
+        st.session_state.event_type = selected_event
+        inv_defaults = InvitationEngine.get_default_metadata(st.session_state.selected_religion, selected_event)
+        st.session_state.honoree_names = inv_defaults["honoree_names"]
+        evt_lower = selected_event.lower()
+        for st_name in sub_trad_names:
+            if ("engagement" in evt_lower and "engagement" in st_name.lower()) or \
+               ("anniversary" in evt_lower and "anniversary" in st_name.lower()):
+                st.session_state.tradition = st_name
+                break
+        if "ai_invitations" in st.session_state:
+            del st.session_state["ai_invitations"]
 
     col_cur, col_bud = st.columns([1, 2.5])
     with col_cur:
@@ -814,15 +848,26 @@ with tab_budget:
 
     with col_insights:
         st.markdown("##### 💡 Financial Advisory Insights")
-        ai_engine = UtsavAIEngine()
-        insights_text = ai_engine.analyze_budget_insights(
-            total_b,
-            allocations,
-            curr,
-            guests,
-            st.session_state.tradition
-        )
-        st.markdown(insights_text)
+        if "budget_insights" not in st.session_state:
+            cost_per_guest = (total_b / guests) if guests > 0 else 0
+            st.session_state.budget_insights = (
+                f"💡 **Financial Advisory Insights:**\n"
+                f"- **Per Guest Investment:** {curr}{cost_per_guest:,.0f} across {guests:,} attendees.\n"
+                f"- **Catering & Hospitality:** In {st.session_state.tradition} celebrations, catering satisfaction correlates directly with event sentiment. Ensure live counters are prioritized.\n"
+                f"- **Vendor Contracting Tip:** Retain 10–15% buffer liquidity for unseasonal weather protection or extra guest plates on Day 2."
+            )
+        st.markdown(st.session_state.budget_insights)
+        if st.button("🔄 Refresh Financial Insights (Gemini)", key="refresh_insights_btn"):
+            ai_engine = UtsavAIEngine()
+            with st.spinner("🤖 Consulting Gemini AI financial advisor..."):
+                st.session_state.budget_insights = ai_engine.analyze_budget_insights(
+                    total_b,
+                    allocations,
+                    curr,
+                    guests,
+                    st.session_state.tradition
+                )
+            st.rerun()
 
     # Detailed Category Matrix Table
     st.markdown("---")
@@ -971,7 +1016,7 @@ with tab_checklists:
 # =========================================================
 with tab_invitations:
     st.markdown("### 💌 Personalized Multi-Tier Guest Invitation Suite")
-    st.caption("Segment your guests into tiers to deliver culturally resonant, medium-specific invitations.")
+    st.caption(f"Delivering culturally resonant, medium-specific invitations tailored specifically for **{st.session_state.selected_religion}** • **{st.session_state.event_type}**.")
 
     c_t1, c_t2, c_t3 = st.columns(3)
     t1_guests = int(guests * 0.20)
@@ -1002,35 +1047,92 @@ with tab_invitations:
 
     st.markdown("<br>", unsafe_allow_html=True)
 
-    with st.expander("📝 Customize Invitation Details", expanded=False):
+    # Action Toolbar: Gemini AI Generation + Customization
+    col_act1, col_act2, col_act3 = st.columns([2, 1.4, 1.2])
+    with col_act1:
+        ai_invite_btn = st.button("✨ AI Personalize Invitations (Gemini)", type="primary", use_container_width=True)
+    with col_act2:
+        reset_defaults_btn = st.button("🔄 Auto-Fill Faith Defaults", use_container_width=True)
+    with col_act3:
+        if "ai_invitations" in st.session_state and st.session_state.ai_invitations:
+            st.markdown('<div style="text-align: right; padding-top: 6px;"><span class="pill-badge" style="background: rgba(16, 185, 129, 0.2); border-color: #10B981; color: #6EE7B7;">🤖 Gemini AI Active</span></div>', unsafe_allow_html=True)
+        else:
+            st.markdown('<div style="text-align: right; padding-top: 6px;"><span class="pill-badge" style="background: rgba(212, 175, 55, 0.15); border-color: #D4AF37; color: #F7E7B4;">📋 Standard Verified</span></div>', unsafe_allow_html=True)
+
+    dates_str = f"{st.session_state.start_date.strftime('%B %d, %Y')} ({st.session_state.event_duration} Days)"
+
+    if reset_defaults_btn:
+        def_meta = InvitationEngine.get_default_metadata(st.session_state.selected_religion, st.session_state.event_type)
+        st.session_state.host_names = def_meta["host_names"]
+        st.session_state.honoree_names = def_meta["honoree_names"]
+        st.session_state.venue_location = def_meta["venue_location"]
+        st.session_state.rsvp_contact = def_meta["rsvp_contact"]
+        if "ai_invitations" in st.session_state:
+            del st.session_state["ai_invitations"]
+        st.success(f"✨ Updated default names and venue for {st.session_state.selected_religion} • {st.session_state.event_type}!")
+        st.rerun()
+
+    if ai_invite_btn:
+        ai_engine = UtsavAIEngine()
+        with st.spinner(f"🤖 Consulting Gemini AI to craft authentic invitations for {st.session_state.selected_religion} • {st.session_state.event_type}..."):
+            ai_invites = ai_engine.generate_ai_invitations(
+                event_name=st.session_state.event_type,
+                hosts=st.session_state.host_names,
+                honorees=st.session_state.honoree_names,
+                tradition=st.session_state.tradition,
+                venue=st.session_state.venue_location,
+                dates=dates_str,
+                rsvp_contact=st.session_state.rsvp_contact,
+                religion=st.session_state.selected_religion
+            )
+            st.session_state.ai_invitations = ai_invites
+            st.success("✨ Gemini AI crafted multi-tier invitations successfully!")
+            st.rerun()
+
+    with st.expander("📝 Customize Invitation Details & Names", expanded=False):
         c_h1, c_h2 = st.columns(2)
         with c_h1:
-            host_in = st.text_input("Host Family Names", value=st.session_state.host_names)
+            host_in = st.text_input("Host Family / Organizers", value=st.session_state.host_names)
             honoree_in = st.text_input("Honoree / Couple Names", value=st.session_state.honoree_names)
         with c_h2:
             venue_in = st.text_input("Venue Name & City", value=st.session_state.venue_location)
             rsvp_in = st.text_input("RSVP Phone & Email", value=st.session_state.rsvp_contact)
 
-        if st.button("Update Invitation Copy"):
+        if st.button("Save Customized Details"):
             st.session_state.host_names = host_in
             st.session_state.honoree_names = honoree_in
             st.session_state.venue_location = venue_in
             st.session_state.rsvp_contact = rsvp_in
+            if "ai_invitations" in st.session_state:
+                del st.session_state["ai_invitations"]
+            st.success("Updated invitation details!")
             st.rerun()
 
-    dates_str = f"{st.session_state.start_date.strftime('%B %d, %Y')} ({st.session_state.event_duration} Days)"
-    invitations = InvitationEngine.generate_invitations(
-        event_name=st.session_state.event_type,
-        hosts=st.session_state.host_names,
-        honorees=st.session_state.honoree_names,
-        tradition=st.session_state.tradition,
-        venue=st.session_state.venue_location,
-        dates=dates_str,
-        rsvp_contact=st.session_state.rsvp_contact,
-        religion=st.session_state.selected_religion
-    )
+    # Active invitation dataset
+    if "ai_invitations" in st.session_state and st.session_state.ai_invitations:
+        invitations = st.session_state.ai_invitations
+    else:
+        invitations = InvitationEngine.generate_invitations(
+            event_name=st.session_state.event_type,
+            hosts=st.session_state.host_names,
+            honorees=st.session_state.honoree_names,
+            tradition=st.session_state.tradition,
+            venue=st.session_state.venue_location,
+            dates=dates_str,
+            rsvp_contact=st.session_state.rsvp_contact,
+            religion=st.session_state.selected_religion
+        )
 
     tier_tabs = st.tabs(list(invitations.keys()))
+
+    full_export_text = [
+        f"UTSAVAI MULTI-TIER INVITATION SUITE",
+        f"Event: {st.session_state.event_type} | Faith: {st.session_state.selected_religion} | Tradition: {st.session_state.tradition}",
+        f"Hosts: {st.session_state.host_names} | Honorees: {st.session_state.honoree_names}",
+        f"Venue: {st.session_state.venue_location} | Dates: {dates_str}",
+        "=" * 60,
+        ""
+    ]
 
     for i, (tier_name, tier_content) in enumerate(invitations.items()):
         with tier_tabs[i]:
@@ -1047,6 +1149,20 @@ with tab_invitations:
 
             with fmt_email:
                 st.text_area("Email Invitation Copy", value=tier_content["email_copy"], height=240, key=f"email_{i}")
+
+            full_export_text.append(f"\n--- {tier_name} ({tier_content['badge']}) ---")
+            full_export_text.append(f"AUDIENCE: {tier_content['audience']}\n")
+            full_export_text.append(f"[DIGITAL CARD COPY]\n{tier_content['card_copy']}\n")
+            full_export_text.append(f"[WHATSAPP BROADCAST]\n{tier_content['whatsapp_copy']}\n")
+            full_export_text.append(f"[FORMAL EMAIL]\n{tier_content['email_copy']}\n")
+
+    st.markdown("---")
+    st.download_button(
+        "📥 Download Full Invitation Suite (.TXT)",
+        data="\n".join(full_export_text),
+        file_name=f"utsav_{st.session_state.selected_religion.lower()}_{st.session_state.event_type.lower().replace(' ', '_')}_invitations.txt",
+        mime="text/plain"
+    )
 
 
 # =========================================================
