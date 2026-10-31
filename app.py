@@ -16,6 +16,7 @@ try:
 except ImportError:
     pass
 
+import importlib
 from config.traditions import (
     CULTURAL_TRADITIONS,
     EVENT_TYPES,
@@ -25,6 +26,15 @@ from config.traditions import (
 from config.global_traditions import GLOBAL_RELIGIONS
 from core.budget_engine import BudgetEngine
 from core.checklist_engine import ChecklistEngine
+import core.invitation_engine
+import core.ai_client
+import core.prompts
+try:
+    importlib.reload(core.invitation_engine)
+    importlib.reload(core.ai_client)
+    importlib.reload(core.prompts)
+except Exception:
+    pass
 from core.invitation_engine import InvitationEngine
 from core.itinerary_engine import ItineraryEngine
 from core.vendor_engine import VendorEngine
@@ -210,8 +220,89 @@ st.markdown(CUSTOM_CSS, unsafe_allow_html=True)
 
 
 # ---------------------------------------------------------
-# Session State Initialization
+# Session State Initialization & Resilient Helpers
 # ---------------------------------------------------------
+def get_safe_invitation_metadata(
+    religion: str = "Hinduism",
+    event_type: str = "Grand Wedding",
+    country: str = "India",
+    city: str = "Surat"
+) -> dict:
+    """Safely retrieves invitation metadata defaults with resilient fallback against stale hot-reload caches."""
+    try:
+        if hasattr(InvitationEngine, "get_default_metadata"):
+            return InvitationEngine.get_default_metadata(religion, event_type, country=country, city=city)
+    except Exception:
+        pass
+
+    # Resilient fallback in case of stale cache during hot-reload on cloud platforms
+    rel_lower = (religion or "Hinduism").lower()
+    evt_lower = (event_type or "Grand Wedding").lower()
+
+    if "christian" in rel_lower:
+        if "anniversary" in evt_lower:
+            return {
+                "host_names": "The Anderson Family & Children",
+                "honoree_names": "Arthur & Eleanor Anderson (Golden 50th Anniversary)",
+                "venue_location": "St. Regis Grand Ballroom & Terrace",
+                "rsvp_contact": "celebrate@andersonfamily.org / +1 (555) 345-6789"
+            }
+        return {
+            "host_names": "The Anderson & Miller Families",
+            "honoree_names": "David & Sarah",
+            "venue_location": "Grace Cathedral & The Grand Ballroom",
+            "rsvp_contact": "celebrate@davidandsarah.com / +1 (555) 123-4567"
+        }
+    elif "islam" in rel_lower:
+        return {
+            "host_names": "The Khan & Rahman Families",
+            "honoree_names": "Zayn & Fatima",
+            "venue_location": "Al-Bustan Palace & Royal Banquet, Dubai",
+            "rsvp_contact": "nikah@zaynandfatima.com / +971 50 234 5678"
+        }
+    elif "sikh" in rel_lower:
+        return {
+            "host_names": "S. Gurpreet Singh & Sdrn. Harleen Kaur",
+            "honoree_names": "Ranveer Singh & Jasleen Kaur",
+            "venue_location": "Gurdwara Sahib & Royal Heritage Resort",
+            "rsvp_contact": "anandkaraj@ranveerjasleen.com / +91 98140 12345"
+        }
+    elif "jewish" in rel_lower or "judaism" in rel_lower:
+        return {
+            "host_names": "The Goldberg & Levine Families",
+            "honoree_names": "Noah & Rebecca",
+            "venue_location": "Congregation Beth Shalom & Grand Ballroom",
+            "rsvp_contact": "mazeltov@noahrebecca.org / +1 (555) 789-0123"
+        }
+    elif "buddhis" in rel_lower:
+        return {
+            "host_names": "The Chen & Lin Families",
+            "honoree_names": "Bodhicitta Union of Tenzin & Pema",
+            "venue_location": "Tranquil Lotus Pavilion & Garden Sanctuary",
+            "rsvp_contact": "rsvp@tenzinandpema.org / +1 (555) 456-7890"
+        }
+    elif "jain" in rel_lower:
+        return {
+            "host_names": "Shri Ashokbhai & Smt. Jayshreeben Shah",
+            "honoree_names": "Aarav & Riya",
+            "venue_location": "Jain Derasar Complex & Shanti Niketan Banquet",
+            "rsvp_contact": "manglik@aaravandriya.com / +91 98250 12345"
+        }
+    else:
+        if "anniversary" in evt_lower:
+            return {
+                "host_names": "The Sharma Family & Children",
+                "honoree_names": "Ramesh & Sunita Sharma (Silver 25th Jubilee)",
+                "venue_location": "The Grand Heritage Lawn & Banquet",
+                "rsvp_contact": "sharma.jubilee@gmail.com / +91 98251 00000"
+            }
+        return {
+            "host_names": "Shri Rajesh & Smt. Anita Sharma",
+            "honoree_names": "Aarav & Ananya",
+            "venue_location": "The Grand Palace Resort & Convention Center",
+            "rsvp_contact": "rsvp@aaravandananya.com / +91 98765 43210"
+        }
+
 def initialize_state():
     if "selected_religion" not in st.session_state:
         st.session_state.selected_religion = "Hinduism"
@@ -241,7 +332,7 @@ def initialize_state():
         st.session_state.selected_city = "Surat"
 
     # Dynamic faith-and-event calibrated defaults for invitation suite
-    inv_defaults = InvitationEngine.get_default_metadata(st.session_state.selected_religion, st.session_state.event_type)
+    inv_defaults = get_safe_invitation_metadata(st.session_state.selected_religion, st.session_state.event_type)
     if "host_names" not in st.session_state:
         st.session_state.host_names = inv_defaults["host_names"]
     if "honoree_names" not in st.session_state:
@@ -379,7 +470,7 @@ with st.sidebar:
         st.session_state.current_religion = selected_religion
         st.session_state.selected_religion = selected_religion
         st.session_state.tradition = sub_trad_names[0]
-        inv_defaults = InvitationEngine.get_default_metadata(selected_religion, selected_event)
+        inv_defaults = get_safe_invitation_metadata(selected_religion, selected_event, country=sel_country, city=sel_city)
         st.session_state.host_names = inv_defaults["host_names"]
         st.session_state.honoree_names = inv_defaults["honoree_names"]
         st.session_state.venue_location = f"{sel_city}, {sel_state}, {sel_country}"
@@ -392,7 +483,7 @@ with st.sidebar:
     elif st.session_state.current_event != selected_event:
         st.session_state.current_event = selected_event
         st.session_state.event_type = selected_event
-        inv_defaults = InvitationEngine.get_default_metadata(st.session_state.selected_religion, selected_event)
+        inv_defaults = get_safe_invitation_metadata(st.session_state.selected_religion, selected_event, country=sel_country, city=sel_city)
         st.session_state.honoree_names = inv_defaults["honoree_names"]
         evt_lower = selected_event.lower()
         for st_name in sub_trad_names:
@@ -1062,7 +1153,12 @@ with tab_invitations:
     dates_str = f"{st.session_state.start_date.strftime('%B %d, %Y')} ({st.session_state.event_duration} Days)"
 
     if reset_defaults_btn:
-        def_meta = InvitationEngine.get_default_metadata(st.session_state.selected_religion, st.session_state.event_type)
+        def_meta = get_safe_invitation_metadata(
+            st.session_state.selected_religion,
+            st.session_state.event_type,
+            country=st.session_state.selected_country,
+            city=st.session_state.selected_city
+        )
         st.session_state.host_names = def_meta["host_names"]
         st.session_state.honoree_names = def_meta["honoree_names"]
         st.session_state.venue_location = def_meta["venue_location"]
